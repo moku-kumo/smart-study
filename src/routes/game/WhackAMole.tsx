@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -19,25 +19,31 @@ export default function WhackAMole() {
   const [finished, setFinished] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const moleRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const runningRef = useRef(false)
 
-  const showMole = useCallback(() => {
+  const showMole = () => {
+    if (!runningRef.current) return
     const idx = Math.floor(Math.random() * GRID)
     setActive(idx)
     moleRef.current = setTimeout(() => {
       setActive(null)
-      if (!finished) moleRef.current = setTimeout(showMole, 300 + Math.random() * 400)
+      if (runningRef.current) {
+        moleRef.current = setTimeout(showMole, 300 + Math.random() * 400)
+      }
     }, 800 + Math.random() * 600)
-  }, [finished])
+  }
 
   const start = () => {
     setStarted(true)
     setFinished(false)
     setScore(0)
     setTimeLeft(GAME_TIME)
+    runningRef.current = true
     showMole()
     timerRef.current = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
+          runningRef.current = false
           clearInterval(timerRef.current)
           clearTimeout(moleRef.current)
           setActive(null)
@@ -51,6 +57,7 @@ export default function WhackAMole() {
 
   useEffect(() => {
     return () => {
+      runningRef.current = false
       clearInterval(timerRef.current)
       clearTimeout(moleRef.current)
     }
@@ -60,7 +67,12 @@ export default function WhackAMole() {
     if (idx === active) {
       if (soundEnabled) playCorrect()
       setScore((s) => s + 1)
+      clearTimeout(moleRef.current)
       setActive(null)
+      // 즉시 다음 두더지 예약
+      if (runningRef.current) {
+        moleRef.current = setTimeout(showMole, 200 + Math.random() * 300)
+      }
     }
   }
 
@@ -95,7 +107,7 @@ export default function WhackAMole() {
         </main>
       ) : (
         <main className="flex-1 flex flex-col items-center gap-4">
-          <div className="w-full max-w-xs bg-green-200 rounded-full h-3 overflow-hidden">
+          <div className="w-full max-w-sm bg-green-200 rounded-full h-3 overflow-hidden">
             <div
               className="h-full bg-green-500 transition-all duration-1000"
               style={{ width: `${(timeLeft / GAME_TIME) * 100}%` }}
@@ -103,12 +115,12 @@ export default function WhackAMole() {
           </div>
           <p className="text-gray-500 text-sm">{timeLeft}초</p>
 
-          <div className="grid grid-cols-3 gap-3 w-full max-w-xs mt-4">
+          <div className="grid grid-cols-3 gap-2 w-full max-w-sm mt-2 touch-manipulation">
             {Array.from({ length: GRID }).map((_, i) => (
               <button
                 key={i}
-                onClick={() => whack(i)}
-                className="aspect-square rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-4xl transition-all active:scale-95"
+                onPointerDown={() => whack(i)}
+                className="aspect-square rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-5xl select-none touch-manipulation active:scale-95 transition-transform"
               >
                 <AnimatePresence>
                   {active === i && (

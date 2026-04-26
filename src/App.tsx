@@ -14,7 +14,7 @@ import ReadWord from '@/routes/korean/ReadWord'
 import ReadBatchim from '@/routes/korean/ReadBatchim'
 import GameHome from '@/routes/game/GameHome'
 import WhackAMole from '@/routes/game/WhackAMole'
-import BalloonPop from '@/routes/game/BalloonPop'
+import DodgePoop from '@/routes/game/DodgePoop'
 import SpotDiff from '@/routes/game/SpotDiff'
 import ParentDashboard from '@/routes/ParentDashboard'
 import Phonics from '@/routes/english/Phonics'
@@ -38,7 +38,7 @@ function App() {
         <Route path="/korean/batchim" element={<ReadBatchim />} />
         <Route path="/game" element={<GameHome />} />
         <Route path="/game/whack" element={<WhackAMole />} />
-        <Route path="/game/balloon" element={<BalloonPop />} />
+        <Route path="/game/dodge" element={<DodgePoop />} />
         <Route path="/game/spot" element={<SpotDiff />} />
         <Route path="/parent" element={<ParentDashboard />} />
         <Route path="/english/phonics" element={<Phonics />} />
