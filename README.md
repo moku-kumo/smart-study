@@ -1,73 +1,37 @@
-# React + TypeScript + Vite
+﻿# 🎓 SmartStudy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> 6세 어린이를 위한 종합 학습 PWA — **놀면서 배우자!**
 
-Currently, two official plugins are available:
+## 📱 배포
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**[https://moku-kumo.github.io/SmartStudy/](https://moku-kumo.github.io/SmartStudy/)**
 
-## React Compiler
+모바일 홈 화면에 추가하면 앱처럼 사용할 수 있습니다.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 📚 과목 & 학습 모드
 
-## Expanding the ESLint configuration
+| 과목 | 모드 | 설명 |
+|------|------|------|
+| 🔢 수학 | ➕ 더하기 | 1자리 덧셈, 6지선다 (난이도 3단계) |
+| | ⬜ 빈칸채우기 | 연속 수열 빈칸 맞히기 |
+| | 🧩 패턴채우기 | 등차수열 패턴 찾기 |
+| 🔤 영어 | 🅰️ 알파벳 | 대문자↔소문자 매칭 |
+| | 🖼️ 그림단어 | 이모지 그림 보고 영어 단어 고르기 |
+| | 🔊 듣기 | TTS로 단어 듣고 고르기 |
+| 가 국어 | ㄱㅏ 자음/모음 | 자모 인식 + 음가 듣기 |
+| | 📖 단어읽기 | 그림+한글 매칭 (받침없는 단어) |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ 기술 스택
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Vite 8 · React 18 · TypeScript · Tailwind CSS v4 · shadcn/ui · Zustand · Framer Motion · Web Speech API · WebAudio API
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 🚀 개발
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 📄 라이선스
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+MIT
