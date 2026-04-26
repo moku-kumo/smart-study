@@ -7,78 +7,105 @@ import { useGameTimer } from '@/hooks/useGameTimer'
 import { playCorrect } from '@/lib/audio'
 
 const GAME_TIME = 30
-const PLAYER_W = 48 // px
-const POOP_SIZE = 36
-const LANE_COUNT = 5
+const PLAYER_SIZE = 40 // px
+const POOP_SIZE = 32 // px
+const PLAYER_SPEED = 6 // px per frame
+const HIT_SHRINK = 0.6 // 충돌 판정을 실제 크기의 60%로
 
 interface Poop {
   id: number
-  lane: number // 0~LANE_COUNT-1
+  x: number // px from left
   y: number // px from top
-  speed: number // px per frame tick
+  speed: number // px per frame
 }
 
 export default function DodgePoop() {
   useGameTimer()
   const { soundEnabled } = useSettingsStore()
-  const [playerLane, setPlayerLane] = useState(Math.floor(LANE_COUNT / 2))
   const [score, setScore] = useState(0)
   const [timeLeft, setTimeLeft] = useState(GAME_TIME)
   const [started, setStarted] = useState(false)
   const [finished, setFinished] = useState(false)
   const [hit, setHit] = useState(false)
 
+  // All game state in refs for rAF loop
+  const playerXRef = useRef(0)
+  const [playerX, setPlayerX] = useState(0)
   const poopsRef = useRef<Poop[]>([])
-  const [poops, setPoops] = useState<Poop[]>([])
+  const [renderPoops, setRenderPoops] = useState<Poop[]>([])
   const nextId = useRef(0)
   const frameRef = useRef<number>(undefined)
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const spawnRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const scoreRef = useRef(0)
-  const playerLaneRef = useRef(playerLane)
   const runningRef = useRef(false)
   const areaRef = useRef<HTMLDivElement>(null)
 
-  playerLaneRef.current = playerLane
+  // Movement: track which direction is being held
+  const moveDir = useRef(0) // -1 left, 0 none, 1 right
+  // Touch drag tracking
+  const touchStartX = useRef(0)
+  const playerStartX = useRef(0)
+  const dragging = useRef(false)
 
-  const getAreaHeight = () => areaRef.current?.clientHeight ?? 500
+  const getArea = () => {
+    const el = areaRef.current
+    return { w: el?.clientWidth ?? 300, h: el?.clientHeight ?? 500 }
+  }
 
   const spawnPoop = useCallback(() => {
     if (!runningRef.current) return
-    const lane = Math.floor(Math.random() * LANE_COUNT)
-    const elapsed = GAME_TIME - (timerRef.current ? 1 : 0)
-    const speedBoost = Math.min(elapsed * 0.1, 3)
+    const { w } = getArea()
+    const margin = POOP_SIZE
     const p: Poop = {
       id: nextId.current++,
-      lane,
+      x: margin + Math.random() * (w - margin * 2),
       y: -POOP_SIZE,
-      speed: 3 + Math.random() * 2 + speedBoost,
+      speed: 2.5 + Math.random() * 2,
     }
     poopsRef.current = [...poopsRef.current, p]
   }, [])
 
   const gameLoop = useCallback(() => {
     if (!runningRef.current) return
-    const areaH = getAreaHeight()
-    const playerY = areaH - PLAYER_W - 8
+    const { w, h } = getArea()
+
+    // Move player
+    if (moveDir.current !== 0) {
+      playerXRef.current = Math.max(
+        0,
+        Math.min(w - PLAYER_SIZE, playerXRef.current + moveDir.current * PLAYER_SPEED),
+      )
+      setPlayerX(playerXRef.current)
+    }
+
+    const px = playerXRef.current
+    const py = h - PLAYER_SIZE - 8
+    // Shrunk hitbox for forgiving collision
+    const hs = (PLAYER_SIZE * (1 - HIT_SHRINK)) / 2
+    const pLeft = px + hs
+    const pRight = px + PLAYER_SIZE - hs
+    const pTop = py + hs
+    const pBottom = py + PLAYER_SIZE - hs
 
     let hitDetected = false
     const alive: Poop[] = []
 
     for (const p of poopsRef.current) {
       const newY = p.y + p.speed
-      if (newY > areaH + POOP_SIZE) {
-        // passed bottom → survived → +1 point
+      if (newY > h + POOP_SIZE) {
         scoreRef.current += 1
         setScore(scoreRef.current)
         continue
       }
-      // collision check
-      if (
-        p.lane === playerLaneRef.current &&
-        newY + POOP_SIZE > playerY &&
-        newY < playerY + PLAYER_W
-      ) {
+      // AABB collision
+      const poopHs = (POOP_SIZE * (1 - HIT_SHRINK)) / 2
+      const oLeft = p.x - POOP_SIZE / 2 + poopHs
+      const oRight = p.x + POOP_SIZE / 2 - poopHs
+      const oTop = newY - POOP_SIZE / 2 + poopHs
+      const oBottom = newY + POOP_SIZE / 2 - poopHs
+
+      if (pLeft < oRight && pRight > oLeft && pTop < oBottom && pBottom > oTop) {
         hitDetected = true
         break
       }
@@ -92,27 +119,30 @@ export default function DodgePoop() {
       setHit(true)
       setFinished(true)
       poopsRef.current = []
-      setPoops([])
+      setRenderPoops([])
       return
     }
 
     poopsRef.current = alive
-    setPoops([...alive])
+    setRenderPoops([...alive])
     frameRef.current = requestAnimationFrame(gameLoop)
   }, [])
 
   const start = () => {
+    const { w } = getArea()
+    const startX = (w - PLAYER_SIZE) / 2
+    playerXRef.current = startX
+    setPlayerX(startX)
     setStarted(true)
     setFinished(false)
     setHit(false)
     setScore(0)
     setTimeLeft(GAME_TIME)
-    setPlayerLane(Math.floor(LANE_COUNT / 2))
-    playerLaneRef.current = Math.floor(LANE_COUNT / 2)
     poopsRef.current = []
-    setPoops([])
+    setRenderPoops([])
     nextId.current = 0
     scoreRef.current = 0
+    moveDir.current = 0
     runningRef.current = true
 
     frameRef.current = requestAnimationFrame(gameLoop)
@@ -142,42 +172,45 @@ export default function DodgePoop() {
     }
   }, [])
 
-  // Touch / click control: tap left half → move left, right half → move right
-  const handleAreaTap = (e: React.PointerEvent) => {
+  // Touch: drag to move player directly
+  const handlePointerDown = (e: React.PointerEvent) => {
     if (!runningRef.current) return
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const mid = rect.width / 2
-    setPlayerLane((lane) => {
-      const next = x < mid ? Math.max(0, lane - 1) : Math.min(LANE_COUNT - 1, lane + 1)
-      playerLaneRef.current = next
-      return next
-    })
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    dragging.current = true
+    touchStartX.current = e.clientX
+    playerStartX.current = playerXRef.current
   }
 
-  // Keyboard
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (!runningRef.current) return
-      if (e.key === 'ArrowLeft' || e.key === 'a') {
-        setPlayerLane((l) => {
-          const next = Math.max(0, l - 1)
-          playerLaneRef.current = next
-          return next
-        })
-      } else if (e.key === 'ArrowRight' || e.key === 'd') {
-        setPlayerLane((l) => {
-          const next = Math.min(LANE_COUNT - 1, l + 1)
-          playerLaneRef.current = next
-          return next
-        })
-      }
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!dragging.current || !runningRef.current) return
+    const { w } = getArea()
+    const dx = e.clientX - touchStartX.current
+    const newX = Math.max(0, Math.min(w - PLAYER_SIZE, playerStartX.current + dx))
+    playerXRef.current = newX
+    setPlayerX(newX)
+  }
 
-  const laneWidth = 100 / LANE_COUNT
+  const handlePointerUp = () => {
+    dragging.current = false
+  }
+
+  // Keyboard: hold arrow keys
+  useEffect(() => {
+    const keys = new Set<string>()
+    const update = () => {
+      if (keys.has('ArrowLeft') || keys.has('a')) moveDir.current = -1
+      else if (keys.has('ArrowRight') || keys.has('d')) moveDir.current = 1
+      else moveDir.current = 0
+    }
+    const down = (e: KeyboardEvent) => { keys.add(e.key); update() }
+    const up = (e: KeyboardEvent) => { keys.delete(e.key); update() }
+    window.addEventListener('keydown', down)
+    window.addEventListener('keyup', up)
+    return () => {
+      window.removeEventListener('keydown', down)
+      window.removeEventListener('keyup', up)
+    }
+  }, [])
 
   return (
     <div className="min-h-dvh flex flex-col bg-gradient-to-b from-amber-50 to-orange-100 p-4 pt-[max(1rem,env(safe-area-inset-top))] overflow-hidden">
@@ -212,7 +245,7 @@ export default function DodgePoop() {
           </button>
           {!finished && (
             <p className="text-gray-400 text-sm text-center">
-              화면 왼쪽/오른쪽을 터치해서<br />💩를 피하세요!
+              손가락을 드래그해서<br />💩를 피하세요!
             </p>
           )}
         </main>
@@ -228,27 +261,26 @@ export default function DodgePoop() {
 
           <div
             ref={areaRef}
-            onPointerDown={handleAreaTap}
-            className="flex-1 relative mt-2 touch-manipulation select-none overflow-hidden rounded-2xl bg-gradient-to-b from-green-100 to-green-200 border-2 border-green-300"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            className="flex-1 relative mt-2 touch-none select-none overflow-hidden rounded-2xl bg-gradient-to-b from-green-100 to-green-200 border-2 border-green-300"
           >
-            {/* Lane guides */}
-            {Array.from({ length: LANE_COUNT - 1 }).map((_, i) => (
-              <div
-                key={i}
-                className="absolute top-0 bottom-0 w-px bg-green-300/40"
-                style={{ left: `${(i + 1) * laneWidth}%` }}
-              />
-            ))}
-
             {/* Poops */}
-            {poops.map((p) => (
+            {renderPoops.map((p) => (
               <div
                 key={p.id}
-                className="absolute text-3xl"
+                className="absolute pointer-events-none"
                 style={{
-                  left: `${p.lane * laneWidth + laneWidth / 2}%`,
+                  left: p.x,
                   top: p.y,
-                  transform: 'translateX(-50%)',
+                  width: POOP_SIZE,
+                  height: POOP_SIZE,
+                  transform: 'translate(-50%, -50%)',
+                  fontSize: POOP_SIZE - 4,
+                  lineHeight: 1,
+                  textAlign: 'center',
                   willChange: 'top',
                 }}
               >
@@ -258,19 +290,19 @@ export default function DodgePoop() {
 
             {/* Player */}
             <div
-              className="absolute text-4xl transition-all duration-100"
+              className="absolute pointer-events-none"
               style={{
-                left: `${playerLane * laneWidth + laneWidth / 2}%`,
+                left: playerX,
                 bottom: 8,
-                transform: 'translateX(-50%)',
+                width: PLAYER_SIZE,
+                height: PLAYER_SIZE,
+                fontSize: PLAYER_SIZE - 4,
+                lineHeight: 1,
+                textAlign: 'center',
               }}
             >
               🏃
             </div>
-
-            {/* Left/Right indicators */}
-            <div className="absolute bottom-2 left-2 text-2xl opacity-30 pointer-events-none">◀</div>
-            <div className="absolute bottom-2 right-2 text-2xl opacity-30 pointer-events-none">▶</div>
           </div>
         </>
       )}
