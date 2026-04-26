@@ -12,13 +12,16 @@ export const REQUIRED_STUDY_SECONDS = 300 // 5분
 interface StudyTimeState {
   dailySeconds: Record<string, number>       // 공부 시간
   dailyGameSeconds: Record<string, number>   // 게임 시간
+  timeLimitOff: Record<string, boolean>      // 곱하기 문제로 시간제한 해제
   addSeconds: (seconds: number) => void
   addGameSeconds: (seconds: number) => void
+  setTimeLimitOff: () => void
 }
 
 export const useStudyTimeStore = create<StudyTimeState>((set, get) => ({
   dailySeconds: load<Record<string, number>>('dailySeconds', {}),
   dailyGameSeconds: load<Record<string, number>>('dailyGameSeconds', {}),
+  timeLimitOff: load<Record<string, boolean>>('timeLimitOff', {}),
   addSeconds: (seconds) => {
     const daily = { ...get().dailySeconds }
     const key = todayKey()
@@ -32,6 +35,12 @@ export const useStudyTimeStore = create<StudyTimeState>((set, get) => ({
     daily[key] = (daily[key] ?? 0) + seconds
     save('dailyGameSeconds', daily)
     set({ dailyGameSeconds: daily })
+  },
+  setTimeLimitOff: () => {
+    const tl = { ...get().timeLimitOff }
+    tl[todayKey()] = true
+    save('timeLimitOff', tl)
+    set({ timeLimitOff: tl })
   },
 }))
 
@@ -57,7 +66,14 @@ export function getRemainingGameSeconds(state: StudyTimeState): number {
   return Math.max(0, studied - played)
 }
 
-/** 게임 플레이 가능 여부 (잠금 해제 + 남은 시간 > 0) */
+/** 오늘 시간제한 해제 여부 */
+export function isTimeLimitOff(state: StudyTimeState): boolean {
+  return state.timeLimitOff[todayKey()] === true
+}
+
+/** 게임 플레이 가능 여부 (잠금 해제 + (남은 시간 > 0 또는 시간제한 해제)) */
 export function canPlayGame(state: StudyTimeState): boolean {
-  return isGameUnlocked(state) && getRemainingGameSeconds(state) > 0
+  if (!isGameUnlocked(state)) return false
+  if (isTimeLimitOff(state)) return true
+  return getRemainingGameSeconds(state) > 0
 }
