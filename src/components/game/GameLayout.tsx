@@ -35,7 +35,7 @@ export default function GameLayout({
   useStudyTimer()
   const [settingsOpen, setSettingsOpen] = useState(false)
   return (
-    <div className="min-h-dvh flex flex-col bg-gradient-to-br from-slate-50 to-gray-100 p-4">
+    <div className="min-h-dvh flex flex-col bg-gradient-to-br from-slate-50 to-gray-100 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
       <header className="flex items-center justify-between mb-4">
         <Link to={backTo} className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700">
           <ChevronLeft size={20} /> {backLabel}

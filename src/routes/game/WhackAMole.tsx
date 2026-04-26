@@ -65,7 +65,7 @@ export default function WhackAMole() {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col bg-gradient-to-br from-green-50 to-lime-50 p-4">
+    <div className="min-h-dvh flex flex-col bg-gradient-to-br from-green-50 to-lime-50 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
       <header className="flex items-center justify-between mb-4">
         <Link to="/game" className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700">
           <ChevronLeft size={20} /> 게임

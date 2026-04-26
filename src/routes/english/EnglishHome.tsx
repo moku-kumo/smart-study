@@ -13,7 +13,7 @@ const modes = [
 export default function EnglishHome() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-green-50 to-emerald-50 p-6 relative">
+    <div className="min-h-dvh bg-gradient-to-br from-green-50 to-emerald-50 p-6 pt-[max(1.5rem,env(safe-area-inset-top))] relative">
       <button
         onClick={() => setSettingsOpen(true)}
         className="absolute top-4 right-4 p-3 rounded-full bg-white/70 hover:bg-white shadow-md transition"

@@ -721,7 +721,7 @@ export default function SpotDiff() {
   }, [cleared, found, totalDiffs, soundEnabled])
 
   return (
-    <div className="min-h-dvh flex flex-col bg-gradient-to-br from-indigo-50 to-violet-50 p-3">
+    <div className="min-h-dvh flex flex-col bg-gradient-to-br from-indigo-50 to-violet-50 p-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
       <header className="flex items-center justify-between mb-2">
         <Link to="/game" className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700">
           <ChevronLeft size={20}/> 게임

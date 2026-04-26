@@ -23,7 +23,7 @@ export default function Home() {
   const remMins = Math.floor(remainingGame / 60)
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-pink-50 p-6 relative">
+    <div className="min-h-dvh flex flex-col items-center justify-center bg-gradient-to-br from-orange-50 to-pink-50 p-6 pt-[max(1.5rem,env(safe-area-inset-top))] relative">
       <button
         onClick={() => setSettingsOpen(true)}
         className="absolute top-4 right-4 p-3 rounded-full bg-white/70 hover:bg-white shadow-md transition"

@@ -25,7 +25,7 @@ export default function GameHome() {
   const remSecs = remainingGame % 60
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-pink-50 to-orange-50 p-6">
+    <div className="min-h-dvh bg-gradient-to-br from-pink-50 to-orange-50 p-6 pt-[max(1.5rem,env(safe-area-inset-top))]">
       <Link to="/" className="inline-flex items-center gap-1 text-pink-500 hover:text-pink-700 mb-6">
         <ChevronLeft size={20} /> 홈으로
       </Link>
