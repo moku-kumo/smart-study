@@ -11,6 +11,7 @@ import ListenWord from '@/routes/english/ListenWord'
 import KoreanHome from '@/routes/korean/KoreanHome'
 import Jamo from '@/routes/korean/Jamo'
 import ReadWord from '@/routes/korean/ReadWord'
+import ReadBatchim from '@/routes/korean/ReadBatchim'
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/korean" element={<KoreanHome />} />
         <Route path="/korean/jamo" element={<Jamo />} />
         <Route path="/korean/word" element={<ReadWord />} />
+        <Route path="/korean/batchim" element={<ReadBatchim />} />
       </Routes>
     </BrowserRouter>
   )

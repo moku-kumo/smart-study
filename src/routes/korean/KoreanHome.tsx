@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react'
 const modes = [
   { to: '/korean/jamo', emoji: 'ㄱㅏ', label: '자음/모음' },
   { to: '/korean/word', emoji: '📖', label: '단어읽기' },
+  { to: '/korean/batchim', emoji: '📝', label: '받침 단어' },
 ]
 
 export default function KoreanHome() {
@@ -14,7 +15,7 @@ export default function KoreanHome() {
         <ChevronLeft size={20} /> 홈으로
       </Link>
       <h1 className="text-4xl font-bold text-purple-600 mb-8 text-center">가 국어</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-md mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-lg mx-auto">
         {modes.map((m, i) => (
           <SubjectCard key={m.to} {...m} index={i} />
         ))}
