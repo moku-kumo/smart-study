@@ -7,6 +7,7 @@ import SubjectCard from '@/components/SubjectCard'
 const games = [
   { to: '/game/whack', emoji: '🐹', label: '두더지잡기' },
   { to: '/game/balloon', emoji: '🎈', label: '풍선 터뜨리기' },
+  { to: '/game/spot', emoji: '🔍', label: '다른 그림 찾기' },
 ]
 
 export default function GameHome() {

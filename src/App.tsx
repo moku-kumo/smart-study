@@ -15,6 +15,7 @@ import ReadBatchim from '@/routes/korean/ReadBatchim'
 import GameHome from '@/routes/game/GameHome'
 import WhackAMole from '@/routes/game/WhackAMole'
 import BalloonPop from '@/routes/game/BalloonPop'
+import SpotDiff from '@/routes/game/SpotDiff'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/game" element={<GameHome />} />
         <Route path="/game/whack" element={<WhackAMole />} />
         <Route path="/game/balloon" element={<BalloonPop />} />
+        <Route path="/game/spot" element={<SpotDiff />} />
       </Routes>
     </BrowserRouter>
   )
