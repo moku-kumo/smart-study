@@ -56,7 +56,7 @@ function generateProblem(settings: StepPatternSettings, blankCount: number) {
 
 export default function Pattern() {
   const { stepPatternSettings, timerEnabled, timerSeconds, soundEnabled } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('math/pattern')
   const [problem, setProblem] = useState(() =>
     generateProblem(stepPatternSettings, stepPatternSettings.blankCount)
   )

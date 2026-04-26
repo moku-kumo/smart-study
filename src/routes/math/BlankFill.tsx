@@ -36,7 +36,7 @@ function generateProblem(settings: PatternSettings) {
 
 export default function BlankFill() {
   const { patternSettings, timerEnabled, timerSeconds, soundEnabled } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('math/blank')
   const [problem, setProblem] = useState(() => generateProblem(patternSettings))
   const [filled, setFilled] = useState<number[]>([])
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)

@@ -6,6 +6,7 @@ import { ChevronLeft, Settings } from 'lucide-react'
 
 const modes = [
   { to: '/english/alphabet', emoji: '🅰️', label: '알파벳' },
+  { to: '/english/phonics', emoji: '🔤', label: '파닉스' },
   { to: '/english/picture', emoji: '🖼️', label: '그림단어' },
   { to: '/english/listen', emoji: '🔊', label: '듣기' },
 ]

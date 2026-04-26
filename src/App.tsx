@@ -16,6 +16,8 @@ import GameHome from '@/routes/game/GameHome'
 import WhackAMole from '@/routes/game/WhackAMole'
 import BalloonPop from '@/routes/game/BalloonPop'
 import SpotDiff from '@/routes/game/SpotDiff'
+import ParentDashboard from '@/routes/ParentDashboard'
+import Phonics from '@/routes/english/Phonics'
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
         <Route path="/game/whack" element={<WhackAMole />} />
         <Route path="/game/balloon" element={<BalloonPop />} />
         <Route path="/game/spot" element={<SpotDiff />} />
+        <Route path="/parent" element={<ParentDashboard />} />
+        <Route path="/english/phonics" element={<Phonics />} />
       </Routes>
     </BrowserRouter>
   )

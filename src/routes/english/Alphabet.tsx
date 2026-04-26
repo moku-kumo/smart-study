@@ -28,7 +28,7 @@ function generateProblem(mode: AlphabetMode) {
 
 export default function Alphabet() {
   const { timerEnabled, timerSeconds, soundEnabled, englishSettings } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('english/alphabet')
   const [problem, setProblem] = useState(() => generateProblem(englishSettings.alphabetMode))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)

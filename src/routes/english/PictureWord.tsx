@@ -16,7 +16,7 @@ function generateProblem(wordCount: number) {
 
 export default function PictureWord() {
   const { timerEnabled, timerSeconds, soundEnabled, englishSettings } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('english/picture')
   const [problem, setProblem] = useState(() => generateProblem(englishSettings.wordCount))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)

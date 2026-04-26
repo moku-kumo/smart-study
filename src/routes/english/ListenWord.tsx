@@ -18,7 +18,7 @@ function generateProblem(wordCount: number) {
 
 export default function ListenWord() {
   const { timerEnabled, timerSeconds, soundEnabled, englishSettings } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('english/listen')
   const { speak } = useSpeech()
   const [problem, setProblem] = useState(() => generateProblem(englishSettings.wordCount))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)

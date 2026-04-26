@@ -31,7 +31,7 @@ function generateProblem(wordLength: string, lastWord?: string) {
 
 export default function ReadWord() {
   const { timerEnabled, timerSeconds, soundEnabled, koreanSettings } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('korean/word')
   const lastWordRef = useRef<string | undefined>(undefined)
   const [problem, setProblem] = useState(() => generateProblem(koreanSettings.wordLength))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)

@@ -22,7 +22,7 @@ function generateProblem(difficulty: AdditionDifficulty) {
 
 export default function Addition() {
   const { additionDifficulty, timerEnabled, timerSeconds, soundEnabled } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('math/addition')
   const [problem, setProblem] = useState(() => generateProblem(additionDifficulty))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)

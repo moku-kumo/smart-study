@@ -24,7 +24,7 @@ function generateProblem(filter: JamoFilter) {
 
 export default function Jamo() {
   const { timerEnabled, timerSeconds, soundEnabled, koreanSettings } = useSettingsStore()
-  const { score, total, addCorrect, addWrong } = useScore()
+  const { score, total, addCorrect, addWrong } = useScore('korean/jamo')
   const { speak } = useSpeech()
   const [problem, setProblem] = useState(() => generateProblem(koreanSettings.jamoFilter))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)

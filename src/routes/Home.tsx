@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import SettingsModal from '@/components/SettingsModal'
 import { useState } from 'react'
-import { Settings } from 'lucide-react'
+import { Settings, BarChart3 } from 'lucide-react'
 import { useStudyTimeStore, getTodaySeconds, isGameUnlocked, canPlayGame, getRemainingGameSeconds, REQUIRED_STUDY_SECONDS } from '@/stores/studyTimeStore'
 
 const subjects = [
@@ -31,6 +31,13 @@ export default function Home() {
       >
         <Settings size={24} />
       </button>
+      <Link
+        to="/parent"
+        className="absolute top-4 left-4 p-3 rounded-full bg-white/70 hover:bg-white shadow-md transition"
+        aria-label="학습 통계"
+      >
+        <BarChart3 size={24} className="text-blue-500" />
+      </Link>
 
       <motion.h1
         className="text-5xl font-bold text-orange-500 mb-2"
