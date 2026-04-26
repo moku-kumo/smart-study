@@ -13,40 +13,96 @@ export default function WhackAMole() {
   useGameTimer()
   const { soundEnabled } = useSettingsStore()
   const [score, setScore] = useState(0)
-  const [active, setActive] = useState<number | null>(null)
+  const [actives, setActives] = useState<Set<number>>(new Set())
   const [timeLeft, setTimeLeft] = useState(GAME_TIME)
   const [started, setStarted] = useState(false)
   const [finished, setFinished] = useState(false)
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
-  const moleRef = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const moleTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
   const runningRef = useRef(false)
+  const scoreRef = useRef(0)
+  const elapsedRef = useRef(0) // seconds elapsed
 
-  const showMole = () => {
+  // 난이도에 따라 동시 두더지 수, 표시 시간, 간격 결정
+  const getDifficulty = () => {
+    const t = elapsedRef.current
+    if (t < 5) return { maxMoles: 1, showTime: 1000, gap: 600 }      // 0~5초: 1마리, 느림
+    if (t < 12) return { maxMoles: 1, showTime: 700, gap: 400 }      // 5~12초: 1마리, 빠름
+    if (t < 20) return { maxMoles: 2, showTime: 650, gap: 350 }      // 12~20초: 2마리
+    return { maxMoles: 3, showTime: 550, gap: 250 }                   // 20초~: 3마리
+  }
+
+  const pickRandomSlots = (count: number, exclude: Set<number>) => {
+    const available = Array.from({ length: GRID }, (_, i) => i).filter((i) => !exclude.has(i))
+    const picks: number[] = []
+    for (let i = 0; i < Math.min(count, available.length); i++) {
+      const idx = Math.floor(Math.random() * available.length)
+      picks.push(available[idx])
+      available.splice(idx, 1)
+    }
+    return picks
+  }
+
+  const showMoles = () => {
     if (!runningRef.current) return
-    const idx = Math.floor(Math.random() * GRID)
-    setActive(idx)
-    moleRef.current = setTimeout(() => {
-      setActive(null)
-      if (runningRef.current) {
-        moleRef.current = setTimeout(showMole, 300 + Math.random() * 400)
+    const { maxMoles, showTime, gap } = getDifficulty()
+
+    setActives((prev) => {
+      // 몇 마리 더 보여줄지 (현재 활성 수 고려)
+      const toAdd = Math.max(1, maxMoles - prev.size)
+      const slots = pickRandomSlots(toAdd, prev)
+      const next = new Set(prev)
+
+      for (const slot of slots) {
+        next.add(slot)
+        // 각 두더지 개별 타이머: 일정 시간 후 사라짐
+        const hideDelay = showTime + Math.random() * 300
+        const timer = setTimeout(() => {
+          if (!runningRef.current) return
+          setActives((s) => {
+            const n = new Set(s)
+            n.delete(slot)
+            return n
+          })
+          moleTimers.current.delete(slot)
+        }, hideDelay)
+        moleTimers.current.set(slot, timer)
       }
-    }, 800 + Math.random() * 600)
+
+      return next
+    })
+
+    // 다음 웨이브 예약
+    if (runningRef.current) {
+      const nextGap = gap + Math.random() * 200
+      setTimeout(showMoles, nextGap)
+    }
   }
 
   const start = () => {
     setStarted(true)
     setFinished(false)
     setScore(0)
+    scoreRef.current = 0
+    elapsedRef.current = 0
     setTimeLeft(GAME_TIME)
+    setActives(new Set())
+    moleTimers.current.forEach((t) => clearTimeout(t))
+    moleTimers.current.clear()
     runningRef.current = true
-    showMole()
+
+    // 첫 두더지 약간 딜레이 후 시작
+    setTimeout(showMoles, 500)
+
     timerRef.current = setInterval(() => {
+      elapsedRef.current += 1
       setTimeLeft((t) => {
         if (t <= 1) {
           runningRef.current = false
           clearInterval(timerRef.current)
-          clearTimeout(moleRef.current)
-          setActive(null)
+          moleTimers.current.forEach((tm) => clearTimeout(tm))
+          moleTimers.current.clear()
+          setActives(new Set())
           setFinished(true)
           return 0
         }
@@ -59,21 +115,26 @@ export default function WhackAMole() {
     return () => {
       runningRef.current = false
       clearInterval(timerRef.current)
-      clearTimeout(moleRef.current)
+      moleTimers.current.forEach((t) => clearTimeout(t))
     }
   }, [])
 
   const whack = (idx: number) => {
-    if (idx === active) {
+    setActives((prev) => {
+      if (!prev.has(idx)) return prev
       if (soundEnabled) playCorrect()
-      setScore((s) => s + 1)
-      clearTimeout(moleRef.current)
-      setActive(null)
-      // 즉시 다음 두더지 예약
-      if (runningRef.current) {
-        moleRef.current = setTimeout(showMole, 200 + Math.random() * 300)
+      scoreRef.current += 1
+      setScore(scoreRef.current)
+      // 해당 두더지 타이머 취소
+      const timer = moleTimers.current.get(idx)
+      if (timer) {
+        clearTimeout(timer)
+        moleTimers.current.delete(idx)
       }
-    }
+      const next = new Set(prev)
+      next.delete(idx)
+      return next
+    })
   }
 
   return (
@@ -123,7 +184,7 @@ export default function WhackAMole() {
                 className="aspect-square rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-5xl select-none touch-manipulation active:scale-95 transition-transform"
               >
                 <AnimatePresence>
-                  {active === i && (
+                  {actives.has(i) && (
                     <motion.span
                       initial={{ y: 20, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
