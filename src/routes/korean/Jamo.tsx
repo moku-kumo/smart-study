@@ -31,8 +31,10 @@ export default function Jamo() {
   const [timerKey, setTimerKey] = useState(0)
 
   useEffect(() => {
-    speak(problem.correct.sound, 'ko-KR')
-  }, [problem.correct.sound, speak])
+    // 자음은 이름(기역,니은...)으로, 모음은 소리(아,야...)로 읽어줌
+    const text = problem.correct.type === 'consonant' ? problem.correct.name : problem.correct.sound
+    speak(text, 'ko-KR')
+  }, [problem.correct, speak])
 
   const next = useCallback(() => {
     setProblem(generateProblem(koreanSettings.jamoFilter))
