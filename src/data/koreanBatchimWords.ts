@@ -22,7 +22,7 @@ export const koreanBatchimWords: KoreanBatchimEntry[] = [
   { word: '꽃', emoji: '🌸' },
   { word: '벌', emoji: '🐝' },
   { word: '숲', emoji: '🌲' },
-  { word: '땅', emoji: '🟤' },
+  { word: '땅', emoji: '🌍' },
   { word: '쌀', emoji: '🍚' },
   { word: '감', emoji: '🍊' },
   { word: '옷', emoji: '👕' },
