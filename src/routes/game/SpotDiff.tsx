@@ -12,8 +12,8 @@ import { randInt, shuffle } from '@/lib/random'
    테마: 숲, 바다, 우주, 도시, 농장, 수중
 ================================================================ */
 
-const W = 360
-const H = 280
+const W = 540
+const H = 420
 const pick = <T,>(arr: T[]): T => arr[randInt(0, arr.length - 1)]
 
 /* ── 요소 타입 ── */
@@ -432,6 +432,46 @@ function starPoints(cx: number, cy: number, outerR: number, innerR: number, pts:
    테마별 장면 생성
 ================================================================ */
 
+// 좌표를 1.5배 스케일 (기존 360x280 → 540x420)
+const S = 1.5
+
+// 겹침 방지: 기존 요소들과 거리 체크
+function findNonOverlapping(
+  elems: SceneElem[],
+  x: number, y: number, size: number,
+  minDist = 30,
+): { x: number; y: number } {
+  let bx = x, by = y
+  for (let attempt = 0; attempt < 8; attempt++) {
+    let ok = true
+    for (const e of elems) {
+      const dx = bx - e.x, dy = by - e.y
+      const needed = (size + e.size) * 0.7 + minDist
+      if (Math.sqrt(dx * dx + dy * dy) < needed) { ok = false; break }
+    }
+    if (ok) return { x: bx, y: by }
+    bx = x + (Math.random() - 0.5) * 80 * S
+    by = y + (Math.random() - 0.5) * 40 * S
+    // 화면 내 유지
+    bx = Math.max(20, Math.min(W - 20, bx))
+    by = Math.max(20, Math.min(H - 20, by))
+  }
+  return { x: bx, y: by }
+}
+
+function addElem(
+  elems: SceneElem[],
+  elem: Omit<SceneElem, 'x' | 'y'> & { x: number; y: number },
+  avoidOverlap = true,
+) {
+  if (avoidOverlap) {
+    const pos = findNonOverlapping(elems, elem.x, elem.y, elem.size)
+    elems.push({ ...elem, x: pos.x, y: pos.y })
+  } else {
+    elems.push(elem as SceneElem)
+  }
+}
+
 function generateScene(round: number): Level {
   const theme = THEMES[round % THEMES.length]
   const elems: SceneElem[] = []
@@ -440,130 +480,133 @@ function generateScene(round: number): Level {
 
   let bgColor: string
   let groundColor: string
-  let groundY = 170
+  let groundY = Math.round(170 * S)
+
+  // 스케일된 randInt
+  const sr = (a: number, b: number) => randInt(Math.round(a * S), Math.round(b * S))
 
   switch (theme) {
     case 'forest': {
       bgColor = pick(['#87CEEB', '#B0E0E6', '#ADD8E6'])
       groundColor = pick(['#90EE90', '#7CCD7C', '#8FBC8F'])
-      elems.push({ id: id(), type: 'sun', x: randInt(40,80), y: randInt(25,50), size: randInt(18,24), color: pick(['#FFD700','#FFA500']) })
+      addElem(elems, { id: id(), type: 'sun', x: sr(40,80), y: sr(25,50), size: sr(18,24), color: pick(['#FFD700','#FFA500']) }, false)
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'cloud', x: randInt(80+i*100,150+i*100), y: randInt(20,60), size: randInt(14,20), color: pick(['#FFF','#F0F0F0']) })
+        addElem(elems, { id: id(), type: 'cloud', x: sr(80+i*100,150+i*100), y: sr(20,60), size: sr(14,20), color: pick(['#FFF','#F0F0F0']) }, false)
       if (Math.random()>0.4) for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'mountain', x: randInt(50+i*150,180+i*150), y: randInt(125,150), size: randInt(40,60), color: pick(['#6B8E23','#808080','#696969']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'house', x: randInt(100,260), y: randInt(170,190), size: randInt(22,28), color: pick(['#FFD700','#DEB887','#F4A460']), color2: pick(['#B22222','#8B0000','#CD5C5C']) })
+        addElem(elems, { id: id(), type: 'mountain', x: sr(50+i*150,180+i*150), y: sr(125,150), size: sr(40,60), color: pick(['#6B8E23','#808080','#696969']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'house', x: sr(100,260), y: sr(170,190), size: sr(22,28), color: pick(['#FFD700','#DEB887','#F4A460']), color2: pick(['#B22222','#8B0000','#CD5C5C']) })
       for (let i=0; i<randInt(2,4); i++)
-        elems.push({ id: id(), type: 'tree', x: randInt(20+i*80,70+i*80), y: randInt(180,205), size: randInt(18,28), color: pick(['#228B22','#2E8B57','#3CB371']), color2: pick(['#8B4513','#A0522D']) })
+        addElem(elems, { id: id(), type: 'tree', x: sr(20+i*80,70+i*80), y: sr(180,205), size: sr(18,28), color: pick(['#228B22','#2E8B57','#3CB371']), color2: pick(['#8B4513','#A0522D']) })
       for (let i=0; i<randInt(2,5); i++)
-        elems.push({ id: id(), type: 'flower', x: randInt(20,340), y: randInt(220,250), size: randInt(6,10), color: pick(['#FF6B8A','#FFD700','#FF69B4','#DA70D6','#FF4500']) })
+        addElem(elems, { id: id(), type: 'flower', x: sr(20,340), y: sr(220,250), size: sr(6,10), color: pick(['#FF6B8A','#FFD700','#FF69B4','#DA70D6','#FF4500']) })
       if (Math.random()>0.5) for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'mushroom', x: randInt(30,330), y: randInt(225,250), size: randInt(8,12), color: pick(['#FF4500','#FF6347','#DC143C']) })
+        addElem(elems, { id: id(), type: 'mushroom', x: sr(30,330), y: sr(225,250), size: sr(8,12), color: pick(['#FF4500','#FF6347','#DC143C']) })
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'bird', x: randInt(100,300), y: randInt(40,100), size: randInt(6,10), color: '#333' })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'butterfly', x: randInt(50,310), y: randInt(130,200), size: randInt(8,13), color: pick(['#FF69B4','#9370DB','#FFD700','#00CED1']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'bush', x: randInt(40,320), y: randInt(215,240), size: randInt(14,20), color: pick(['#228B22','#2E8B57']) })
-      if (Math.random()>0.5) elems.push({ id: id(), type: 'pond', x: randInt(80,280), y: randInt(230,255), size: randInt(18,26), color: pick(['#4169E1','#1E90FF']) })
+        addElem(elems, { id: id(), type: 'bird', x: sr(100,300), y: sr(40,100), size: sr(6,10), color: '#333' }, false)
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'butterfly', x: sr(50,310), y: sr(130,200), size: sr(8,13), color: pick(['#FF69B4','#9370DB','#FFD700','#00CED1']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'bush', x: sr(40,320), y: sr(215,240), size: sr(14,20), color: pick(['#228B22','#2E8B57']) })
+      if (Math.random()>0.5) addElem(elems, { id: id(), type: 'pond', x: sr(80,280), y: sr(230,255), size: sr(18,26), color: pick(['#4169E1','#1E90FF']) })
       break
     }
     case 'ocean': {
       bgColor = pick(['#87CEEB', '#B0E0E6'])
       groundColor = pick(['#F4D790', '#EDC9AF', '#DEB887'])
-      groundY = 180
-      elems.push({ id: id(), type: 'sun', x: randInt(250,320), y: randInt(30,55), size: randInt(22,28), color: '#FFD700' })
+      groundY = Math.round(180 * S)
+      addElem(elems, { id: id(), type: 'sun', x: sr(250,320), y: sr(30,55), size: sr(22,28), color: '#FFD700' }, false)
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'cloud', x: randInt(40+i*100,120+i*100), y: randInt(20,55), size: randInt(12,18), color: '#FFF' })
+        addElem(elems, { id: id(), type: 'cloud', x: sr(40+i*100,120+i*100), y: sr(20,55), size: sr(12,18), color: '#FFF' }, false)
       for (let i=0; i<randInt(2,4); i++)
-        elems.push({ id: id(), type: 'wave', x: randInt(40+i*70,100+i*70), y: randInt(155,175), size: randInt(25,40), color: pick(['#4169E1','#1E90FF','#6495ED']) })
-      if (Math.random()>0.3) elems.push({ id: id(), type: 'boat', x: randInt(80,280), y: randInt(120,150), size: randInt(18,25), color: pick(['#8B4513','#CD853F','#A0522D']), color2: '#FFF' })
+        addElem(elems, { id: id(), type: 'wave', x: sr(40+i*70,100+i*70), y: sr(155,175), size: sr(25,40), color: pick(['#4169E1','#1E90FF','#6495ED']) }, false)
+      if (Math.random()>0.3) addElem(elems, { id: id(), type: 'boat', x: sr(80,280), y: sr(120,150), size: sr(18,25), color: pick(['#8B4513','#CD853F','#A0522D']), color2: '#FFF' })
       for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'palmTree', x: randInt(20+i*200,100+i*200), y: randInt(180,200), size: randInt(20,28), color: '#228B22', color2: '#8B6914' })
-      if (Math.random()>0.3) elems.push({ id: id(), type: 'umbrella', x: randInt(120,240), y: randInt(200,220), size: randInt(16,22), color: pick(['#FF4500','#FF69B4','#4169E1','#FFD700']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'sandcastle', x: randInt(100,260), y: randInt(225,245), size: randInt(12,18), color: '#DEB887' })
+        addElem(elems, { id: id(), type: 'palmTree', x: sr(20+i*200,100+i*200), y: sr(180,200), size: sr(20,28), color: '#228B22', color2: '#8B6914' })
+      if (Math.random()>0.3) addElem(elems, { id: id(), type: 'umbrella', x: sr(120,240), y: sr(200,220), size: sr(16,22), color: pick(['#FF4500','#FF69B4','#4169E1','#FFD700']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'sandcastle', x: sr(100,260), y: sr(225,245), size: sr(12,18), color: '#DEB887' })
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'shell', x: randInt(30,330), y: randInt(240,260), size: randInt(6,10), color: pick(['#FFB6C1','#DDA0DD','#FFF0F5','#FFDAB9']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'crab', x: randInt(50,310), y: randInt(230,255), size: randInt(8,13), color: pick(['#FF4500','#FF6347','#E8672C']) })
+        addElem(elems, { id: id(), type: 'shell', x: sr(30,330), y: sr(240,260), size: sr(6,10), color: pick(['#FFB6C1','#DDA0DD','#FFF0F5','#FFDAB9']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'crab', x: sr(50,310), y: sr(230,255), size: sr(8,13), color: pick(['#FF4500','#FF6347','#E8672C']) })
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'bird', x: randInt(50,310), y: randInt(30,80), size: randInt(5,8), color: '#333' })
+        addElem(elems, { id: id(), type: 'bird', x: sr(50,310), y: sr(30,80), size: sr(5,8), color: '#333' }, false)
       break
     }
     case 'space': {
       bgColor = pick(['#0B1D3A', '#0D0D2B', '#1A0A2E'])
       groundColor = pick(['#4A4A6A', '#3D3D5C', '#555577'])
-      groundY = 200
-      elems.push({ id: id(), type: 'moon', x: randInt(40,100), y: randInt(30,60), size: randInt(20,28), color: '#F5F5DC', color2: bgColor })
+      groundY = Math.round(200 * S)
+      addElem(elems, { id: id(), type: 'moon', x: sr(40,100), y: sr(30,60), size: sr(20,28), color: '#F5F5DC', color2: bgColor }, false)
       for (let i=0; i<randInt(5,10); i++)
-        elems.push({ id: id(), type: 'star', x: randInt(10,350), y: randInt(10,160), size: randInt(3,7), color: pick(['#FFD700','#FFF','#FFFACD','#ADD8E6']) })
+        addElem(elems, { id: id(), type: 'star', x: sr(10,350), y: sr(10,160), size: sr(3,7), color: pick(['#FFD700','#FFF','#FFFACD','#ADD8E6']) }, false)
       for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'planet', x: randInt(150+i*100,250+i*80), y: randInt(40,100), size: randInt(15,25), color: pick(['#FF6347','#4169E1','#32CD32','#DA70D6','#FF8C00']), color2: pick(['#DDD','#AAA','#FFD700']) })
-      if (Math.random()>0.3) elems.push({ id: id(), type: 'rocket', x: randInt(80,280), y: randInt(80,150), size: randInt(16,22), color: '#E8E8E8', color2: '#FF4500' })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'ufo', x: randInt(60,300), y: randInt(50,120), size: randInt(14,20), color: pick(['#C0C0C0','#90EE90','#9370DB']), color2: '#C0C0C0' })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'comet', x: randInt(50,200), y: randInt(30,80), size: randInt(8,14), color: pick(['#FFD700','#87CEEB','#FFF']) })
+        addElem(elems, { id: id(), type: 'planet', x: sr(150+i*100,250+i*80), y: sr(40,100), size: sr(15,25), color: pick(['#FF6347','#4169E1','#32CD32','#DA70D6','#FF8C00']), color2: pick(['#DDD','#AAA','#FFD700']) })
+      if (Math.random()>0.3) addElem(elems, { id: id(), type: 'rocket', x: sr(80,280), y: sr(80,150), size: sr(16,22), color: '#E8E8E8', color2: '#FF4500' })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'ufo', x: sr(60,300), y: sr(50,120), size: sr(14,20), color: pick(['#C0C0C0','#90EE90','#9370DB']), color2: '#C0C0C0' })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'comet', x: sr(50,200), y: sr(30,80), size: sr(8,14), color: pick(['#FFD700','#87CEEB','#FFF']) })
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'mountain', x: randInt(40+i*120,140+i*120), y: randInt(200,225), size: randInt(20,35), color: pick(['#5A5A7A','#6B6B8D','#4A4A6A']) })
+        addElem(elems, { id: id(), type: 'mountain', x: sr(40+i*120,140+i*120), y: sr(200,225), size: sr(20,35), color: pick(['#5A5A7A','#6B6B8D','#4A4A6A']) })
       break
     }
     case 'city': {
       bgColor = pick(['#FFB347', '#FF7F50', '#87CEEB', '#FFA07A'])
       groundColor = pick(['#808080', '#696969', '#778899'])
-      groundY = 185
+      groundY = Math.round(185 * S)
       if (bgColor.startsWith('#FF'))
-        elems.push({ id: id(), type: 'sun', x: randInt(150,210), y: randInt(50,80), size: randInt(25,35), color: '#FFD700' })
+        addElem(elems, { id: id(), type: 'sun', x: sr(150,210), y: sr(50,80), size: sr(25,35), color: '#FFD700' }, false)
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'cloud', x: randInt(30+i*100,100+i*100), y: randInt(20,60), size: randInt(12,18), color: '#FFF' })
+        addElem(elems, { id: id(), type: 'cloud', x: sr(30+i*100,100+i*100), y: sr(20,60), size: sr(12,18), color: '#FFF' }, false)
       for (let i=0; i<randInt(3,5); i++)
-        elems.push({ id: id(), type: 'building', x: randInt(20+i*65,60+i*65), y: randInt(160,185), size: randInt(18,28), color: pick(['#4A5568','#2D3748','#718096','#A0AEC0','#E2E8F0','#CBD5E0']) })
+        addElem(elems, { id: id(), type: 'building', x: sr(20+i*65,60+i*65), y: sr(160,185), size: sr(18,28), color: pick(['#4A5568','#2D3748','#718096','#A0AEC0','#E2E8F0','#CBD5E0']) })
       for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'streetlamp', x: randInt(30+i*200,120+i*200), y: randInt(210,230), size: randInt(12,16), color: '#FFD700' })
+        addElem(elems, { id: id(), type: 'streetlamp', x: sr(30+i*200,120+i*200), y: sr(210,230), size: sr(12,16), color: '#FFD700' })
       for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'car', x: randInt(60+i*150,180+i*150), y: randInt(235,250), size: randInt(14,20), color: pick(['#FF4500','#4169E1','#FFD700','#32CD32','#FF69B4']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'trafficLight', x: randInt(100,260), y: randInt(210,230), size: randInt(12,16), color: pick(['#22c55e','#EAB308','#EF4444']) })
+        addElem(elems, { id: id(), type: 'car', x: sr(60+i*150,180+i*150), y: sr(235,250), size: sr(14,20), color: pick(['#FF4500','#4169E1','#FFD700','#32CD32','#FF69B4']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'trafficLight', x: sr(100,260), y: sr(210,230), size: sr(12,16), color: pick(['#22c55e','#EAB308','#EF4444']) })
       for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'tree', x: randInt(40+i*200,130+i*200), y: randInt(205,220), size: randInt(12,18), color: '#228B22', color2: '#8B4513' })
+        addElem(elems, { id: id(), type: 'tree', x: sr(40+i*200,130+i*200), y: sr(205,220), size: sr(12,18), color: '#228B22', color2: '#8B4513' })
       for (let i=0; i<randInt(0,2); i++)
-        elems.push({ id: id(), type: 'bird', x: randInt(50,310), y: randInt(30,80), size: randInt(5,8), color: '#333' })
+        addElem(elems, { id: id(), type: 'bird', x: sr(50,310), y: sr(30,80), size: sr(5,8), color: '#333' }, false)
       break
     }
     case 'farm': {
       bgColor = pick(['#87CEEB', '#B0E0E6'])
       groundColor = pick(['#90EE90', '#7CCD7C', '#8DB600'])
-      groundY = 170
-      elems.push({ id: id(), type: 'sun', x: randInt(280,330), y: randInt(25,50), size: randInt(20,26), color: '#FFD700' })
+      groundY = Math.round(170 * S)
+      addElem(elems, { id: id(), type: 'sun', x: sr(280,330), y: sr(25,50), size: sr(20,26), color: '#FFD700' }, false)
       for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'cloud', x: randInt(50+i*120,150+i*120), y: randInt(20,50), size: randInt(14,20), color: '#FFF' })
-      elems.push({ id: id(), type: 'barn', x: randInt(60,150), y: randInt(165,180), size: randInt(25,32), color: pick(['#B22222','#CD5C5C','#8B0000']) })
-      if (Math.random()>0.3) elems.push({ id: id(), type: 'windmill', x: randInt(230,310), y: randInt(175,195), size: randInt(18,24), color: '#FFF' })
-      elems.push({ id: id(), type: 'fence', x: randInt(140,250), y: randInt(205,215), size: randInt(30,45), color: pick(['#DEB887','#D2B48C']) })
-      if (Math.random()>0.3) elems.push({ id: id(), type: 'cow', x: randInt(140,260), y: randInt(215,235), size: randInt(14,20), color: '#333' })
+        addElem(elems, { id: id(), type: 'cloud', x: sr(50+i*120,150+i*120), y: sr(20,50), size: sr(14,20), color: '#FFF' }, false)
+      addElem(elems, { id: id(), type: 'barn', x: sr(60,150), y: sr(165,180), size: sr(25,32), color: pick(['#B22222','#CD5C5C','#8B0000']) })
+      if (Math.random()>0.3) addElem(elems, { id: id(), type: 'windmill', x: sr(230,310), y: sr(175,195), size: sr(18,24), color: '#FFF' })
+      addElem(elems, { id: id(), type: 'fence', x: sr(140,250), y: sr(205,215), size: sr(30,45), color: pick(['#DEB887','#D2B48C']) })
+      if (Math.random()>0.3) addElem(elems, { id: id(), type: 'cow', x: sr(140,260), y: sr(215,235), size: sr(14,20), color: '#333' })
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'chicken', x: randInt(50+i*80,120+i*80), y: randInt(225,250), size: randInt(8,12), color: pick(['#FFF','#F5DEB3','#DEB887']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'pig', x: randInt(200,300), y: randInt(230,250), size: randInt(12,18), color: pick(['#FFB6C1','#FFC0CB']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'haystack', x: randInt(40,320), y: randInt(220,245), size: randInt(14,20), color: pick(['#DAA520','#B8860B','#D2B48C']) })
+        addElem(elems, { id: id(), type: 'chicken', x: sr(50+i*80,120+i*80), y: sr(225,250), size: sr(8,12), color: pick(['#FFF','#F5DEB3','#DEB887']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'pig', x: sr(200,300), y: sr(230,250), size: sr(12,18), color: pick(['#FFB6C1','#FFC0CB']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'haystack', x: sr(40,320), y: sr(220,245), size: sr(14,20), color: pick(['#DAA520','#B8860B','#D2B48C']) })
       for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'tree', x: randInt(20+i*250,80+i*250), y: randInt(180,200), size: randInt(16,24), color: pick(['#228B22','#2E8B57']), color2: '#8B4513' })
+        addElem(elems, { id: id(), type: 'tree', x: sr(20+i*250,80+i*250), y: sr(180,200), size: sr(16,24), color: pick(['#228B22','#2E8B57']), color2: '#8B4513' })
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'flower', x: randInt(20,340), y: randInt(230,255), size: randInt(5,8), color: pick(['#FF6B8A','#FFD700','#FF4500','#DA70D6']) })
+        addElem(elems, { id: id(), type: 'flower', x: sr(20,340), y: sr(230,255), size: sr(5,8), color: pick(['#FF6B8A','#FFD700','#FF4500','#DA70D6']) })
       break
     }
     case 'underwater': {
       bgColor = pick(['#1A5276', '#1B4F72', '#154360'])
       groundColor = pick(['#F4D790', '#DEB887', '#C4A882'])
-      groundY = 210
+      groundY = Math.round(210 * S)
       for (let i=0; i<randInt(2,4); i++)
-        elems.push({ id: id(), type: 'wave', x: randInt(30+i*80,100+i*80), y: randInt(10,30), size: randInt(30,50), color: pick(['#2E86C1','#3498DB']) })
+        addElem(elems, { id: id(), type: 'wave', x: sr(30+i*80,100+i*80), y: sr(10,30), size: sr(30,50), color: pick(['#2E86C1','#3498DB']) }, false)
       for (let i=0; i<randInt(3,6); i++)
-        elems.push({ id: id(), type: 'seaweed', x: randInt(15+i*55,45+i*55), y: randInt(180,220), size: randInt(20,35), color: pick(['#228B22','#2E8B57','#006400','#3CB371']) })
+        addElem(elems, { id: id(), type: 'seaweed', x: sr(15+i*55,45+i*55), y: sr(180,220), size: sr(20,35), color: pick(['#228B22','#2E8B57','#006400','#3CB371']) })
       for (let i=0; i<randInt(2,4); i++)
-        elems.push({ id: id(), type: 'coral', x: randInt(20+i*80,80+i*80), y: randInt(220,255), size: randInt(12,20), color: pick(['#FF6B8A','#FF4500','#FF69B4','#FFA500','#DA70D6']) })
+        addElem(elems, { id: id(), type: 'coral', x: sr(20+i*80,80+i*80), y: sr(220,255), size: sr(12,20), color: pick(['#FF6B8A','#FF4500','#FF69B4','#FFA500','#DA70D6']) })
       for (let i=0; i<randInt(2,4); i++)
-        elems.push({ id: id(), type: 'fish', x: randInt(30,330), y: randInt(60,180), size: randInt(10,18), color: pick(['#FFD700','#FF6347','#4169E1','#32CD32','#FF69B4','#FFA500']) })
+        addElem(elems, { id: id(), type: 'fish', x: sr(30,330), y: sr(60,180), size: sr(10,18), color: pick(['#FFD700','#FF6347','#4169E1','#32CD32','#FF69B4','#FFA500']) })
       if (Math.random()>0.3) for (let i=0; i<randInt(1,2); i++)
-        elems.push({ id: id(), type: 'jellyfish', x: randInt(50,310), y: randInt(50,120), size: randInt(12,18), color: pick(['#DDA0DD','#FF69B4','#87CEEB','#9370DB']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'octopus', x: randInt(60,300), y: randInt(160,200), size: randInt(14,20), color: pick(['#9370DB','#FF69B4','#FF6347']) })
-      if (Math.random()>0.4) elems.push({ id: id(), type: 'turtle', x: randInt(60,300), y: randInt(100,160), size: randInt(14,20), color: pick(['#2E8B57','#6B8E23']), color2: '#228B22' })
+        addElem(elems, { id: id(), type: 'jellyfish', x: sr(50,310), y: sr(50,120), size: sr(12,18), color: pick(['#DDA0DD','#FF69B4','#87CEEB','#9370DB']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'octopus', x: sr(60,300), y: sr(160,200), size: sr(14,20), color: pick(['#9370DB','#FF69B4','#FF6347']) })
+      if (Math.random()>0.4) addElem(elems, { id: id(), type: 'turtle', x: sr(60,300), y: sr(100,160), size: sr(14,20), color: pick(['#2E8B57','#6B8E23']), color2: '#228B22' })
       for (let i=0; i<randInt(2,4); i++)
-        elems.push({ id: id(), type: 'bubbles', x: randInt(30,330), y: randInt(30,180), size: randInt(8,15), color: '#FFF' })
+        addElem(elems, { id: id(), type: 'bubbles', x: sr(30,330), y: sr(30,180), size: sr(8,15), color: '#FFF' }, false)
       for (let i=0; i<randInt(1,3); i++)
-        elems.push({ id: id(), type: 'shell', x: randInt(30,330), y: randInt(245,265), size: randInt(6,10), color: pick(['#FFB6C1','#DDA0DD','#FFDAB9']) })
+        addElem(elems, { id: id(), type: 'shell', x: sr(30,330), y: sr(245,265), size: sr(6,10), color: pick(['#FFB6C1','#DDA0DD','#FFDAB9']) })
       break
     }
   }

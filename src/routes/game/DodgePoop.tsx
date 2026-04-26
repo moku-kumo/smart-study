@@ -36,10 +36,11 @@ export default function DodgePoop() {
   const nextId = useRef(0)
   const frameRef = useRef<number>(undefined)
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
-  const spawnRef = useRef<ReturnType<typeof setInterval>>(undefined)
+  const spawnRef = useRef<ReturnType<typeof setTimeout>>(undefined)
   const scoreRef = useRef(0)
   const runningRef = useRef(false)
   const areaRef = useRef<HTMLDivElement>(null)
+  const elapsedRef = useRef(0)
 
   // Movement: track which direction is being held
   const moveDir = useRef(0) // -1 left, 0 none, 1 right
@@ -53,17 +54,31 @@ export default function DodgePoop() {
     return { w: el?.clientWidth ?? 300, h: el?.clientHeight ?? 500 }
   }
 
+  // 시간에 따라 스폰 간격, 속도, 동시 개수 증가
+  const getDifficulty = () => {
+    const t = elapsedRef.current
+    if (t < 5) return { interval: 500, speed: 2.5, burst: 1 }
+    if (t < 10) return { interval: 380, speed: 3, burst: 1 }
+    if (t < 15) return { interval: 300, speed: 3.5, burst: 2 }
+    if (t < 20) return { interval: 250, speed: 4, burst: 2 }
+    if (t < 25) return { interval: 200, speed: 4.5, burst: 3 }
+    return { interval: 150, speed: 5, burst: 3 }
+  }
+
   const spawnPoop = useCallback(() => {
     if (!runningRef.current) return
     const { w } = getArea()
     const margin = POOP_SIZE
-    const p: Poop = {
-      id: nextId.current++,
-      x: margin + Math.random() * (w - margin * 2),
-      y: -POOP_SIZE,
-      speed: 2.5 + Math.random() * 2,
+    const { speed, burst } = getDifficulty()
+    for (let i = 0; i < burst; i++) {
+      const p: Poop = {
+        id: nextId.current++,
+        x: margin + Math.random() * (w - margin * 2),
+        y: -POOP_SIZE - i * 20,
+        speed: speed + Math.random() * 1.5,
+      }
+      poopsRef.current = [...poopsRef.current, p]
     }
-    poopsRef.current = [...poopsRef.current, p]
   }, [])
 
   const gameLoop = useCallback(() => {
@@ -115,7 +130,7 @@ export default function DodgePoop() {
     if (hitDetected) {
       runningRef.current = false
       clearInterval(timerRef.current)
-      clearInterval(spawnRef.current)
+      clearTimeout(spawnRef.current)
       setHit(true)
       setFinished(true)
       poopsRef.current = []
@@ -143,16 +158,27 @@ export default function DodgePoop() {
     nextId.current = 0
     scoreRef.current = 0
     moveDir.current = 0
+    elapsedRef.current = 0
     runningRef.current = true
 
     frameRef.current = requestAnimationFrame(gameLoop)
-    spawnRef.current = setInterval(spawnPoop, 600)
+
+    // 동적 스폰: 매 초마다 난이도에 맞게 스폰 간격 재설정
+    const scheduleSpawn = () => {
+      if (!runningRef.current) return
+      spawnPoop()
+      const { interval } = getDifficulty()
+      spawnRef.current = setTimeout(scheduleSpawn, interval + Math.random() * 100)
+    }
+    spawnRef.current = setTimeout(scheduleSpawn, 400)
+
     timerRef.current = setInterval(() => {
+      elapsedRef.current += 1
       setTimeLeft((t) => {
         if (t <= 1) {
           runningRef.current = false
           clearInterval(timerRef.current)
-          clearInterval(spawnRef.current)
+          clearTimeout(spawnRef.current)
           cancelAnimationFrame(frameRef.current!)
           if (soundEnabled) playCorrect()
           setFinished(true)
@@ -167,7 +193,7 @@ export default function DodgePoop() {
     return () => {
       runningRef.current = false
       clearInterval(timerRef.current)
-      clearInterval(spawnRef.current)
+      clearTimeout(spawnRef.current)
       cancelAnimationFrame(frameRef.current!)
     }
   }, [])
@@ -288,21 +314,21 @@ export default function DodgePoop() {
               </div>
             ))}
 
-            {/* Player */}
-            <div
+            {/* Player - 뽀로로 */}
+            <img
+              src={import.meta.env.BASE_URL + 'images/pororo.png'}
+              alt="뽀로로"
               className="absolute pointer-events-none"
+              draggable={false}
               style={{
                 left: playerX,
                 bottom: 8,
                 width: PLAYER_SIZE,
                 height: PLAYER_SIZE,
-                fontSize: PLAYER_SIZE - 4,
-                lineHeight: 1,
-                textAlign: 'center',
+                objectFit: 'contain',
+                transform: 'translateX(-50%)',
               }}
-            >
-              🏃
-            </div>
+            />
           </div>
         </>
       )}

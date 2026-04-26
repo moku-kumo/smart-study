@@ -17,11 +17,13 @@ export default function WhackAMole() {
   const [timeLeft, setTimeLeft] = useState(GAME_TIME)
   const [started, setStarted] = useState(false)
   const [finished, setFinished] = useState(false)
+  const [popups, setPopups] = useState<{ id: number; slot: number; points: number }[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
   const moleTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map())
   const runningRef = useRef(false)
   const scoreRef = useRef(0)
-  const elapsedRef = useRef(0) // seconds elapsed
+  const elapsedRef = useRef(0)
+  const popupId = useRef(0)
 
   // 난이도에 따라 동시 두더지 수, 표시 시간, 간격 결정
   const getDifficulty = () => {
@@ -125,6 +127,10 @@ export default function WhackAMole() {
       if (soundEnabled) playCorrect()
       scoreRef.current += 1
       setScore(scoreRef.current)
+      // +1 팝업 효과
+      const pid = popupId.current++
+      setPopups((p) => [...p, { id: pid, slot: idx, points: 1 }])
+      setTimeout(() => setPopups((p) => p.filter((v) => v.id !== pid)), 700)
       // 해당 두더지 타이머 취소
       const timer = moleTimers.current.get(idx)
       if (timer) {
@@ -181,7 +187,7 @@ export default function WhackAMole() {
               <button
                 key={i}
                 onPointerDown={() => whack(i)}
-                className="aspect-square rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-5xl select-none touch-manipulation active:scale-95 transition-transform"
+                className="aspect-square rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-5xl select-none touch-manipulation active:scale-95 transition-transform relative overflow-visible"
               >
                 <AnimatePresence>
                   {actives.has(i) && (
@@ -194,6 +200,20 @@ export default function WhackAMole() {
                       🐹
                     </motion.span>
                   )}
+                </AnimatePresence>
+                <AnimatePresence>
+                  {popups.filter((p) => p.slot === i).map((p) => (
+                    <motion.span
+                      key={p.id}
+                      initial={{ y: 0, opacity: 1, scale: 1 }}
+                      animate={{ y: -50, opacity: 0, scale: 1.5 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                      className="absolute top-0 left-1/2 -translate-x-1/2 text-lg font-black text-orange-500 pointer-events-none z-10 drop-shadow-md"
+                    >
+                      +{p.points}
+                    </motion.span>
+                  ))}
                 </AnimatePresence>
               </button>
             ))}
