@@ -630,21 +630,24 @@ function SceneSVG({ level, isRight, found, onTap }: {
   const diffMap = useMemo(() => new Map(diffs.map(d => [d.elemId, d])), [diffs])
   const isUnderwater = theme === 'underwater'
 
+  const handlePointer = useCallback((ev: React.PointerEvent<SVGElement>) => {
+    if (!isRight || !onTap) return
+    ev.preventDefault()
+    const svg = ev.currentTarget; const rect = svg.getBoundingClientRect()
+    const cx = (ev.clientX - rect.left) * W / rect.width
+    const cy = (ev.clientY - rect.top) * H / rect.height
+    for (const d of diffs) {
+      if (found.has(d.elemId)) continue
+      if (Math.sqrt((cx-d.cx)**2 + (cy-d.cy)**2) < d.r * 2.5) { onTap(d.elemId); return }
+    }
+    onTap('__miss__')
+  }, [isRight, onTap, diffs, found])
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-2xl shadow-md border-2 border-white touch-none" style={{ maxHeight: '38vh' }}
-      onPointerDown={ev => {
-        if (!isRight || !onTap) return
-        ev.preventDefault()
-        const svg = ev.currentTarget; const rect = svg.getBoundingClientRect()
-        const cx = (ev.clientX - rect.left) * W / rect.width
-        const cy = (ev.clientY - rect.top) * H / rect.height
-        for (const d of diffs) {
-          if (found.has(d.elemId)) continue
-          if (Math.sqrt((cx-d.cx)**2 + (cy-d.cy)**2) < d.r * 2) { onTap(d.elemId); return }
-        }
-        onTap('__miss__')
-      }}
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-2xl shadow-md border-2 border-white touch-none select-none" style={{ maxHeight: '38vh' }}
     >
+      {/* 모든 요소의 포인터 이벤트를 비활성화 */}
+      <g pointerEvents="none">
       {/* 배경 */}
       <rect x={0} y={0} width={W} height={H} fill={bgColor}/>
       {/* 바다 테마: 수면 */}
@@ -680,6 +683,9 @@ function SceneSVG({ level, isRight, found, onTap }: {
           <text x={d.cx} y={d.cy+4} textAnchor="middle" fontSize={14} fill="#22c55e" fontWeight="bold">✓</text>
         </g>
       ) : null)}
+      </g>
+      {/* 투명 오버레이: 모든 터치를 확실하게 캡처 */}
+      <rect x={0} y={0} width={W} height={H} fill="transparent" pointerEvents="all" onPointerDown={handlePointer}/>
     </svg>
   )
 }
