@@ -1,29 +1,103 @@
 import { create } from 'zustand'
 import { load, save } from '@/lib/storage'
 
+// --- 수학 난이도 (SmartGame 이식) ---
+export type AdditionDifficulty = 'easy' | 'normal' | 'hard'
+export const additionRanges = {
+  easy: { min: 1, max: 5 },
+  normal: { min: 0, max: 10 },
+  hard: { min: 0, max: 20 },
+} as const
+
+export interface PatternSettings {
+  minNum: number
+  maxNum: number
+  blankCount: number // 1~3
+}
+
+export interface StepPatternSettings {
+  difficulty: 'easy' | 'hard' // easy=5단위, hard=랜덤 간격
+  maxNum: number
+}
+
+// --- 영어 난이도 ---
+export type AlphabetMode = 'upperToLower' | 'lowerToUpper' | 'mixed'
+export interface EnglishSettings {
+  alphabetMode: AlphabetMode
+  wordCount: number    // 보기 수 (2 | 4 | 6)
+  ttsSpeed: number     // 0.7 ~ 1.2
+}
+
+// --- 국어 난이도 ---
+export type JamoFilter = 'all' | 'consonant' | 'vowel'
+export interface KoreanSettings {
+  jamoFilter: JamoFilter
+  wordLength: 'short' | 'long' | 'all' // short=2자, long=3자+, all
+}
+
+// --- 전체 설정 ---
 interface SettingsState {
   soundEnabled: boolean
   timerEnabled: boolean
-  difficulty: 1 | 2 | 3
+  timerSeconds: number // 글로벌 타이머 초
+
+  // 수학
+  additionDifficulty: AdditionDifficulty
+  patternSettings: PatternSettings
+  stepPatternSettings: StepPatternSettings
+
+  // 영어
+  englishSettings: EnglishSettings
+
+  // 국어
+  koreanSettings: KoreanSettings
+
+  // setters
   setSoundEnabled: (v: boolean) => void
   setTimerEnabled: (v: boolean) => void
-  setDifficulty: (v: 1 | 2 | 3) => void
+  setTimerSeconds: (v: number) => void
+  setAdditionDifficulty: (v: AdditionDifficulty) => void
+  setPatternSettings: (v: Partial<PatternSettings>) => void
+  setStepPatternSettings: (v: Partial<StepPatternSettings>) => void
+  setEnglishSettings: (v: Partial<EnglishSettings>) => void
+  setKoreanSettings: (v: Partial<KoreanSettings>) => void
 }
 
-export const useSettingsStore = create<SettingsState>((set) => ({
+const defaultPatternSettings: PatternSettings = { minNum: 1, maxNum: 50, blankCount: 1 }
+const defaultStepPatternSettings: StepPatternSettings = { difficulty: 'easy', maxNum: 50 }
+const defaultEnglishSettings: EnglishSettings = { alphabetMode: 'mixed', wordCount: 4, ttsSpeed: 0.85 }
+const defaultKoreanSettings: KoreanSettings = { jamoFilter: 'all', wordLength: 'all' }
+
+export const useSettingsStore = create<SettingsState>((set, get) => ({
   soundEnabled: load('soundEnabled', true),
   timerEnabled: load('timerEnabled', true),
-  difficulty: load<1 | 2 | 3>('difficulty', 1),
-  setSoundEnabled: (v) => {
-    save('soundEnabled', v)
-    set({ soundEnabled: v })
+  timerSeconds: load('timerSeconds', 25),
+
+  additionDifficulty: load<AdditionDifficulty>('additionDifficulty', 'easy'),
+  patternSettings: load<PatternSettings>('patternSettings', defaultPatternSettings),
+  stepPatternSettings: load<StepPatternSettings>('stepPatternSettings', defaultStepPatternSettings),
+  englishSettings: load<EnglishSettings>('englishSettings', defaultEnglishSettings),
+  koreanSettings: load<KoreanSettings>('koreanSettings', defaultKoreanSettings),
+
+  setSoundEnabled: (v) => { save('soundEnabled', v); set({ soundEnabled: v }) },
+  setTimerEnabled: (v) => { save('timerEnabled', v); set({ timerEnabled: v }) },
+  setTimerSeconds: (v) => { save('timerSeconds', v); set({ timerSeconds: v }) },
+
+  setAdditionDifficulty: (v) => { save('additionDifficulty', v); set({ additionDifficulty: v }) },
+  setPatternSettings: (v) => {
+    const merged = { ...get().patternSettings, ...v }
+    save('patternSettings', merged); set({ patternSettings: merged })
   },
-  setTimerEnabled: (v) => {
-    save('timerEnabled', v)
-    set({ timerEnabled: v })
+  setStepPatternSettings: (v) => {
+    const merged = { ...get().stepPatternSettings, ...v }
+    save('stepPatternSettings', merged); set({ stepPatternSettings: merged })
   },
-  setDifficulty: (v) => {
-    save('difficulty', v)
-    set({ difficulty: v })
+  setEnglishSettings: (v) => {
+    const merged = { ...get().englishSettings, ...v }
+    save('englishSettings', merged); set({ englishSettings: merged })
+  },
+  setKoreanSettings: (v) => {
+    const merged = { ...get().koreanSettings, ...v }
+    save('koreanSettings', merged); set({ koreanSettings: merged })
   },
 }))

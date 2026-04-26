@@ -3,50 +3,68 @@ import GameLayout from '@/components/game/GameLayout'
 import OptionGrid from '@/components/game/OptionGrid'
 import Feedback from '@/components/game/Feedback'
 import { useScore } from '@/hooks/useScore'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { useSettingsStore, type PatternSettings } from '@/stores/settingsStore'
 import { randInt, shuffle } from '@/lib/random'
 import { playCorrect, playWrong } from '@/lib/audio'
 
-function generateProblem(difficulty: 1 | 2 | 3) {
-  const len = difficulty === 1 ? 5 : difficulty === 2 ? 7 : 9
-  const start = randInt(1, 10)
-  const step = 1
-  const seq = Array.from({ length: len }, (_, i) => start + i * step)
-  const blankIdx = randInt(1, len - 2)
-  const answer = seq[blankIdx]
-  seq[blankIdx] = -1 // blank marker
+function generateProblem(settings: PatternSettings) {
+  const { minNum, maxNum, blankCount } = settings
+  const len = 5
+  const start = randInt(minNum, Math.max(minNum, maxNum - len + 1))
+  const seq = Array.from({ length: len }, (_, i) => start + i)
 
-  const options = new Set<number>([answer])
-  while (options.size < 4) {
-    options.add(randInt(Math.max(1, answer - 3), answer + 3))
+  // 빈칸 위치 (처음과 끝 제외)
+  const blanks: number[] = []
+  while (blanks.length < Math.min(blankCount, len - 2)) {
+    const idx = randInt(1, len - 2)
+    if (!blanks.includes(idx)) blanks.push(idx)
+  }
+  blanks.sort()
+
+  const answers = blanks.map((i) => seq[i])
+  blanks.forEach((i) => { seq[i] = -1 })
+
+  // 옵션: 모든 정답 + 오답
+  const optionSet = new Set<number>(answers)
+  while (optionSet.size < Math.max(3, answers.length + 2)) {
+    const wrong = randInt(Math.max(1, start - 3), start + len + 3)
+    if (!seq.includes(wrong) && !answers.includes(wrong)) optionSet.add(wrong)
   }
 
-  return { seq, blankIdx, answer, options: shuffle([...options]) }
+  return { seq, blanks, answers, currentBlank: 0, options: shuffle([...optionSet]) }
 }
 
 export default function BlankFill() {
-  const { difficulty, timerEnabled, soundEnabled } = useSettingsStore()
+  const { patternSettings, timerEnabled, timerSeconds, soundEnabled } = useSettingsStore()
   const { score, total, addCorrect, addWrong } = useScore()
-  const [problem, setProblem] = useState(() => generateProblem(difficulty))
+  const [problem, setProblem] = useState(() => generateProblem(patternSettings))
+  const [filled, setFilled] = useState<number[]>([])
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)
 
   const next = useCallback(() => {
-    setProblem(generateProblem(difficulty))
+    setProblem(generateProblem(patternSettings))
+    setFilled([])
     setFeedback(null)
     setTimerKey((k) => k + 1)
-  }, [difficulty])
+  }, [patternSettings])
 
   const handleSelect = (opt: number) => {
     if (feedback) return
-    if (opt === problem.answer) {
-      if (soundEnabled) playCorrect()
-      addCorrect()
-      setFeedback('correct')
-    } else {
-      if (soundEnabled) playWrong()
-      addWrong()
-      setFeedback('wrong')
+    const newFilled = [...filled, opt]
+    setFilled(newFilled)
+
+    if (newFilled.length === problem.answers.length) {
+      const allCorrect = problem.answers.every((a, i) => a === newFilled[i])
+      if (allCorrect) {
+        if (soundEnabled) playCorrect()
+        addCorrect()
+        setFeedback('correct')
+      } else {
+        if (soundEnabled) playWrong()
+        addWrong()
+        setFeedback('wrong')
+      }
     }
   }
 
@@ -58,31 +76,48 @@ export default function BlankFill() {
     }
   }
 
+  // 현재 표시할 수열 (채워진 빈칸 반영)
+  const displaySeq = problem.seq.map((n, i) => {
+    const blankOrder = problem.blanks.indexOf(i)
+    if (blankOrder !== -1 && filled[blankOrder] !== undefined) {
+      return filled[blankOrder]
+    }
+    return n
+  })
+
   return (
     <GameLayout
-      title="⬜ 빈칸채우기"
+      title="✏️ 빈칸채우기"
       backTo="/math"
       backLabel="수학"
       score={score}
       total={total}
       timerEnabled={timerEnabled}
-      timerSeconds={difficulty === 1 ? 15 : difficulty === 2 ? 10 : 7}
+      timerSeconds={timerSeconds}
       timerKey={timerKey}
       onTimeUp={handleTimeUp}
     >
-      <div className="flex gap-3 items-center mb-6">
-        {problem.seq.map((n, i) => (
-          <div
-            key={i}
-            className={`w-14 h-14 flex items-center justify-center rounded-xl text-2xl font-bold ${
-              n === -1
-                ? 'bg-yellow-200 border-2 border-yellow-400 text-yellow-600'
-                : 'bg-white border border-gray-200 text-gray-700'
-            }`}
-          >
-            {n === -1 ? '?' : n}
-          </div>
-        ))}
+      <div className="flex gap-3 items-center mb-6 flex-wrap justify-center">
+        {displaySeq.map((n, i) => {
+          const isBlank = problem.blanks.includes(i)
+          const blankOrder = problem.blanks.indexOf(i)
+          const isFilled = isBlank && filled[blankOrder] !== undefined
+          const isNext = isBlank && blankOrder === filled.length
+          return (
+            <div
+              key={i}
+              className={`w-14 h-14 flex items-center justify-center rounded-xl text-2xl font-bold ${
+                isBlank && !isFilled
+                  ? isNext
+                    ? 'bg-yellow-300 border-2 border-yellow-500 text-yellow-700 animate-pulse'
+                    : 'bg-yellow-200 border-2 border-yellow-400 text-yellow-600'
+                  : 'bg-white border border-gray-200 text-gray-700'
+              }`}
+            >
+              {n === -1 ? '?' : n}
+            </div>
+          )
+        })}
       </div>
 
       {feedback ? (

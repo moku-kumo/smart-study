@@ -3,16 +3,17 @@ import GameLayout from '@/components/game/GameLayout'
 import OptionGrid from '@/components/game/OptionGrid'
 import Feedback from '@/components/game/Feedback'
 import { useScore } from '@/hooks/useScore'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { useSettingsStore, type AlphabetMode } from '@/stores/settingsStore'
 import { alphabet } from '@/data/alphabet'
 import { randInt, shuffle } from '@/lib/random'
 import { playCorrect, playWrong } from '@/lib/audio'
 
-function generateProblem() {
+function generateProblem(mode: AlphabetMode) {
   const idx = randInt(0, 25)
   const upper = alphabet.upper[idx]
   const lower = alphabet.lower[idx]
-  const isUpperToLower = Math.random() > 0.5
+  const isUpperToLower =
+    mode === 'upperToLower' ? true : mode === 'lowerToUpper' ? false : Math.random() > 0.5
   const question = isUpperToLower ? upper : lower
   const answer = isUpperToLower ? lower : upper
 
@@ -26,17 +27,17 @@ function generateProblem() {
 }
 
 export default function Alphabet() {
-  const { timerEnabled, soundEnabled } = useSettingsStore()
+  const { timerEnabled, timerSeconds, soundEnabled, englishSettings } = useSettingsStore()
   const { score, total, addCorrect, addWrong } = useScore()
-  const [problem, setProblem] = useState(generateProblem)
+  const [problem, setProblem] = useState(() => generateProblem(englishSettings.alphabetMode))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)
 
   const next = useCallback(() => {
-    setProblem(generateProblem())
+    setProblem(generateProblem(englishSettings.alphabetMode))
     setFeedback(null)
     setTimerKey((k) => k + 1)
-  }, [])
+  }, [englishSettings.alphabetMode])
 
   const handleSelect = (opt: string) => {
     if (feedback) return
@@ -67,7 +68,7 @@ export default function Alphabet() {
       score={score}
       total={total}
       timerEnabled={timerEnabled}
-      timerSeconds={10}
+      timerSeconds={timerSeconds}
       timerKey={timerKey}
       onTimeUp={handleTimeUp}
     >

@@ -8,24 +8,32 @@ import { koreanWords, type KoreanWordEntry } from '@/data/koreanWords'
 import { shuffle, pickRandom } from '@/lib/random'
 import { playCorrect, playWrong } from '@/lib/audio'
 
-function generateProblem() {
-  const [correct, ...distractors] = pickRandom(koreanWords, 4) as [KoreanWordEntry, ...KoreanWordEntry[]]
+function filterByLength(words: KoreanWordEntry[], wordLength: string): KoreanWordEntry[] {
+  if (wordLength === 'short') return words.filter((w) => w.word.length <= 2)
+  if (wordLength === 'long') return words.filter((w) => w.word.length >= 3)
+  return words
+}
+
+function generateProblem(wordLength: string) {
+  const pool = filterByLength(koreanWords, wordLength)
+  const src = pool.length >= 4 ? pool : koreanWords
+  const [correct, ...distractors] = pickRandom(src, 4) as [KoreanWordEntry, ...KoreanWordEntry[]]
   const options = shuffle([correct, ...distractors])
   return { correct, options }
 }
 
 export default function ReadWord() {
-  const { timerEnabled, soundEnabled } = useSettingsStore()
+  const { timerEnabled, timerSeconds, soundEnabled, koreanSettings } = useSettingsStore()
   const { score, total, addCorrect, addWrong } = useScore()
-  const [problem, setProblem] = useState(generateProblem)
+  const [problem, setProblem] = useState(() => generateProblem(koreanSettings.wordLength))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)
 
   const next = useCallback(() => {
-    setProblem(generateProblem())
+    setProblem(generateProblem(koreanSettings.wordLength))
     setFeedback(null)
     setTimerKey((k) => k + 1)
-  }, [])
+  }, [koreanSettings.wordLength])
 
   const handleSelect = (opt: string) => {
     if (feedback) return
@@ -56,7 +64,7 @@ export default function ReadWord() {
       score={score}
       total={total}
       timerEnabled={timerEnabled}
-      timerSeconds={12}
+      timerSeconds={timerSeconds}
       timerKey={timerKey}
       onTimeUp={handleTimeUp}
     >

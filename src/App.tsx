@@ -12,6 +12,9 @@ import KoreanHome from '@/routes/korean/KoreanHome'
 import Jamo from '@/routes/korean/Jamo'
 import ReadWord from '@/routes/korean/ReadWord'
 import ReadBatchim from '@/routes/korean/ReadBatchim'
+import GameHome from '@/routes/game/GameHome'
+import WhackAMole from '@/routes/game/WhackAMole'
+import BalloonPop from '@/routes/game/BalloonPop'
 
 function App() {
   return (
@@ -30,6 +33,9 @@ function App() {
         <Route path="/korean/jamo" element={<Jamo />} />
         <Route path="/korean/word" element={<ReadWord />} />
         <Route path="/korean/batchim" element={<ReadBatchim />} />
+        <Route path="/game" element={<GameHome />} />
+        <Route path="/game/whack" element={<WhackAMole />} />
+        <Route path="/game/balloon" element={<BalloonPop />} />
       </Routes>
     </BrowserRouter>
   )

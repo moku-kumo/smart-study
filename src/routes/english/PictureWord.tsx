@@ -8,24 +8,24 @@ import { englishWords, type WordEntry } from '@/data/englishWords'
 import { shuffle, pickRandom } from '@/lib/random'
 import { playCorrect, playWrong } from '@/lib/audio'
 
-function generateProblem() {
-  const [correct, ...distractors] = pickRandom(englishWords, 4) as [WordEntry, ...WordEntry[]]
+function generateProblem(wordCount: number) {
+  const [correct, ...distractors] = pickRandom(englishWords, wordCount) as [WordEntry, ...WordEntry[]]
   const options = shuffle([correct, ...distractors])
   return { correct, options }
 }
 
 export default function PictureWord() {
-  const { timerEnabled, soundEnabled } = useSettingsStore()
+  const { timerEnabled, timerSeconds, soundEnabled, englishSettings } = useSettingsStore()
   const { score, total, addCorrect, addWrong } = useScore()
-  const [problem, setProblem] = useState(generateProblem)
+  const [problem, setProblem] = useState(() => generateProblem(englishSettings.wordCount))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)
 
   const next = useCallback(() => {
-    setProblem(generateProblem())
+    setProblem(generateProblem(englishSettings.wordCount))
     setFeedback(null)
     setTimerKey((k) => k + 1)
-  }, [])
+  }, [englishSettings.wordCount])
 
   const handleSelect = (opt: string) => {
     if (feedback) return
@@ -56,7 +56,7 @@ export default function PictureWord() {
       score={score}
       total={total}
       timerEnabled={timerEnabled}
-      timerSeconds={12}
+      timerSeconds={timerSeconds}
       timerKey={timerKey}
       onTimeUp={handleTimeUp}
     >

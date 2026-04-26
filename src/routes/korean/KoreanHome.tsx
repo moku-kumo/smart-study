@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import SubjectCard from '@/components/SubjectCard'
-import { ChevronLeft } from 'lucide-react'
+import SettingsModal from '@/components/SettingsModal'
+import { ChevronLeft, Settings } from 'lucide-react'
 
 const modes = [
   { to: '/korean/jamo', emoji: 'ㄱㅏ', label: '자음/모음' },
@@ -9,8 +11,16 @@ const modes = [
 ]
 
 export default function KoreanHome() {
+  const [settingsOpen, setSettingsOpen] = useState(false)
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-purple-50 to-fuchsia-50 p-6">
+    <div className="min-h-dvh bg-gradient-to-br from-purple-50 to-fuchsia-50 p-6 relative">
+      <button
+        onClick={() => setSettingsOpen(true)}
+        className="absolute top-4 right-4 p-3 rounded-full bg-white/70 hover:bg-white shadow-md transition"
+        aria-label="설정"
+      >
+        <Settings size={24} className="text-gray-500" />
+      </button>
       <Link to="/" className="inline-flex items-center gap-1 text-purple-500 hover:text-purple-700 mb-6">
         <ChevronLeft size={20} /> 홈으로
       </Link>
@@ -20,6 +30,7 @@ export default function KoreanHome() {
           <SubjectCard key={m.to} {...m} index={i} />
         ))}
       </div>
+      <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   )
 }

@@ -3,23 +3,30 @@ import GameLayout from '@/components/game/GameLayout'
 import OptionGrid from '@/components/game/OptionGrid'
 import Feedback from '@/components/game/Feedback'
 import { useScore } from '@/hooks/useScore'
-import { useSettingsStore } from '@/stores/settingsStore'
+import { useSettingsStore, type JamoFilter } from '@/stores/settingsStore'
 import { useSpeech } from '@/hooks/useSpeech'
 import { jamoList, type JamoEntry } from '@/data/koreanJamo'
 import { shuffle, pickRandom } from '@/lib/random'
 import { playCorrect, playWrong } from '@/lib/audio'
 
-function generateProblem() {
-  const [correct, ...distractors] = pickRandom(jamoList, 4) as [JamoEntry, ...JamoEntry[]]
+function getFilteredJamo(filter: JamoFilter): JamoEntry[] {
+  if (filter === 'consonant') return jamoList.filter((j) => j.type === 'consonant')
+  if (filter === 'vowel') return jamoList.filter((j) => j.type === 'vowel')
+  return jamoList
+}
+
+function generateProblem(filter: JamoFilter) {
+  const pool = getFilteredJamo(filter)
+  const [correct, ...distractors] = pickRandom(pool, Math.min(4, pool.length)) as [JamoEntry, ...JamoEntry[]]
   const options = shuffle([correct, ...distractors])
   return { correct, options }
 }
 
 export default function Jamo() {
-  const { timerEnabled, soundEnabled } = useSettingsStore()
+  const { timerEnabled, timerSeconds, soundEnabled, koreanSettings } = useSettingsStore()
   const { score, total, addCorrect, addWrong } = useScore()
   const { speak } = useSpeech()
-  const [problem, setProblem] = useState(generateProblem)
+  const [problem, setProblem] = useState(() => generateProblem(koreanSettings.jamoFilter))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)
 
@@ -28,10 +35,10 @@ export default function Jamo() {
   }, [problem.correct.sound, speak])
 
   const next = useCallback(() => {
-    setProblem(generateProblem())
+    setProblem(generateProblem(koreanSettings.jamoFilter))
     setFeedback(null)
     setTimerKey((k) => k + 1)
-  }, [])
+  }, [koreanSettings.jamoFilter])
 
   const handleSelect = (opt: string) => {
     if (feedback) return
@@ -62,7 +69,7 @@ export default function Jamo() {
       score={score}
       total={total}
       timerEnabled={timerEnabled}
-      timerSeconds={10}
+      timerSeconds={timerSeconds}
       timerKey={timerKey}
       onTimeUp={handleTimeUp}
     >
