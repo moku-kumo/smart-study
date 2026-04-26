@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -623,8 +623,9 @@ function generateScene(round: number): Level {
 }
 
 /* ── 장면 SVG 컴포넌트 ── */
-function SceneSVG({ level, isRight, found, onTap }: {
+function SceneSVG({ level, isRight, found, onTap, showHint, lastFoundId }: {
   level: Level; isRight: boolean; found: Set<string>; onTap?: (id: string) => void
+  showHint?: string | null; lastFoundId?: string | null
 }) {
   const { elems, diffs, bgColor, groundColor, theme, groundY } = level
   const diffMap = useMemo(() => new Map(diffs.map(d => [d.elemId, d])), [diffs])
@@ -681,7 +682,31 @@ function SceneSVG({ level, isRight, found, onTap }: {
             <animate attributeName="r" from={d.r*0.8} to={d.r*1.1} dur="0.6s" repeatCount="1" fill="freeze"/>
           </circle>
           <text x={d.cx} y={d.cy+4} textAnchor="middle" fontSize={14} fill="#22c55e" fontWeight="bold">✓</text>
+          {/* 찾은 직후 반짝 효과 */}
+          {lastFoundId === d.elemId && isRight && (
+            <>
+              <circle cx={d.cx} cy={d.cy} r={d.r * 0.5} fill="#22c55e" opacity={0.3}>
+                <animate attributeName="r" from={d.r*0.3} to={d.r*2} dur="0.6s" fill="freeze"/>
+                <animate attributeName="opacity" from="0.4" to="0" dur="0.6s" fill="freeze"/>
+              </circle>
+              {[0,60,120,180,240,300].map(a => (
+                <circle key={a} cx={d.cx + Math.cos(a*Math.PI/180)*d.r*0.8} cy={d.cy + Math.sin(a*Math.PI/180)*d.r*0.8} r={2} fill="#FFD700">
+                  <animate attributeName="r" from="2" to="0" dur="0.8s" fill="freeze"/>
+                  <animate attributeName="cx" from={String(d.cx + Math.cos(a*Math.PI/180)*d.r*0.5)} to={String(d.cx + Math.cos(a*Math.PI/180)*d.r*1.5)} dur="0.8s" fill="freeze"/>
+                  <animate attributeName="cy" from={String(d.cy + Math.sin(a*Math.PI/180)*d.r*0.5)} to={String(d.cy + Math.sin(a*Math.PI/180)*d.r*1.5)} dur="0.8s" fill="freeze"/>
+                </circle>
+              ))}
+            </>
+          )}
         </g>
+      ) : null)}
+
+      {/* 힌트 표시: 해당 영역 깜빡 */}
+      {showHint && diffs.map(d => d.elemId === showHint ? (
+        <circle key={`hint-${d.elemId}`} cx={d.cx} cy={d.cy} r={d.r * 2} fill="#FFD700" opacity={0.15} stroke="#FFD700" strokeWidth={2} strokeDasharray="4 4">
+          <animate attributeName="opacity" values="0.15;0.35;0.15" dur="0.6s" repeatCount="indefinite"/>
+          <animate attributeName="r" values={`${d.r*1.8};${d.r*2.2};${d.r*1.8}`} dur="0.6s" repeatCount="indefinite"/>
+        </circle>
       ) : null)}
       </g>
       {/* 투명 오버레이: 모든 터치를 확실하게 캡처 */}
@@ -700,8 +725,32 @@ export default function SpotDiff() {
   const [found, setFound] = useState<Set<string>>(new Set())
   const [wrongFlash, setWrongFlash] = useState(false)
   const [cleared, setCleared] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(60)
+  const [timeUp, setTimeUp] = useState(false)
+  const [combo, setCombo] = useState(0)
+  const [hintUsed, setHintUsed] = useState<Set<string>>(new Set())
+  const [showHint, setShowHint] = useState<string | null>(null)
+  const [lastFoundId, setLastFoundId] = useState<string | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval>>(undefined)
+  const startedRef = useRef(false)
 
   const totalDiffs = level.diffs.length
+
+  // 타이머 시작
+  useEffect(() => {
+    if (cleared || timeUp) return
+    timerRef.current = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(timerRef.current)
+          setTimeUp(true)
+          return 0
+        }
+        return t - 1
+      })
+    }, 1000)
+    return () => clearInterval(timerRef.current)
+  }, [round, cleared, timeUp])
 
   const next = useCallback(() => {
     const nr = round + 1
@@ -709,27 +758,75 @@ export default function SpotDiff() {
     setLevel(generateScene(nr))
     setFound(new Set())
     setCleared(false)
+    setTimeLeft(60)
+    setTimeUp(false)
+    setCombo(0)
+    setHintUsed(new Set())
+    setShowHint(null)
+    setLastFoundId(null)
+    startedRef.current = false
   }, [round])
 
+  const restart = useCallback(() => {
+    setRound(0)
+    setLevel(generateScene(0))
+    setScore(0)
+    setFound(new Set())
+    setCleared(false)
+    setTimeLeft(60)
+    setTimeUp(false)
+    setCombo(0)
+    setHintUsed(new Set())
+    setShowHint(null)
+    setLastFoundId(null)
+    startedRef.current = false
+  }, [])
+
+  // 힌트: 아직 못 찾은 차이 중 하나 주변을 깜빡
+  const useHint = useCallback(() => {
+    const remaining = level.diffs.filter(d => !found.has(d.elemId) && !hintUsed.has(d.elemId))
+    if (remaining.length === 0) return
+    const target = remaining[Math.floor(Math.random() * remaining.length)]
+    setHintUsed(prev => new Set(prev).add(target.elemId))
+    setShowHint(target.elemId)
+    setScore(s => Math.max(0, s - 5))
+    setTimeout(() => setShowHint(null), 2000)
+  }, [level.diffs, found, hintUsed])
+
   const handleTap = useCallback((elemId: string) => {
-    if (cleared) return
+    if (cleared || timeUp) return
     if (elemId === '__miss__') {
       if (soundEnabled) playWrong()
       setWrongFlash(true)
       setTimeout(() => setWrongFlash(false), 400)
       setScore(s => Math.max(0, s - 2))
+      setCombo(0)
       return
     }
     if (found.has(elemId)) return
     if (soundEnabled) playCorrect()
     const nf = new Set(found); nf.add(elemId); setFound(nf)
-    setScore(s => s + 10)
-    if (nf.size === totalDiffs) { setScore(s => s + 20); setCleared(true) }
-  }, [cleared, found, totalDiffs, soundEnabled])
+    const newCombo = combo + 1
+    setCombo(newCombo)
+    setLastFoundId(elemId)
+    setTimeout(() => setLastFoundId(null), 800)
+    // 콤보 보너스: 연속 맞추면 추가 점수
+    const comboBonus = Math.min(newCombo - 1, 3) * 5
+    setScore(s => s + 10 + comboBonus)
+    if (nf.size === totalDiffs) {
+      clearInterval(timerRef.current)
+      // 시간 보너스: 남은 초 × 2점
+      const timeBonus = timeLeft * 2
+      setScore(s => s + 20 + timeBonus)
+      setCleared(true)
+    }
+  }, [cleared, timeUp, found, totalDiffs, soundEnabled, combo, timeLeft])
+
+  const remainingHints = level.diffs.filter(d => !found.has(d.elemId) && !hintUsed.has(d.elemId)).length
 
   return (
     <div className="min-h-dvh flex flex-col bg-gradient-to-br from-indigo-50 to-violet-50 p-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-      <header className="flex items-center justify-between mb-2">
+      <header className="flex items-center justify-between mb-1">
         <Link to="/game" className="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700">
           <ChevronLeft size={20}/> 게임
         </Link>
@@ -737,42 +834,86 @@ export default function SpotDiff() {
         <span className="text-lg font-bold text-orange-500">⭐{score}</span>
       </header>
 
-      <div className="text-center mb-2">
-        <p className="text-sm text-gray-500">
-          라운드 {round+1} — {THEME_NAMES[level.theme]} · 틀린곳{' '}
-          <span className="font-bold text-indigo-600">{found.size}</span>/{totalDiffs}
-        </p>
-        <div className="flex justify-center gap-1 mt-1">
+      {/* 상태 바: 타이머 + 차이점 + 힌트 */}
+      <div className="flex items-center gap-2 mb-2">
+        {/* 타이머 */}
+        <div className={`flex items-center gap-1 px-2 py-1 rounded-full text-sm font-bold ${
+          timeLeft <= 10 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-blue-100 text-blue-600'
+        }`}>
+          ⏱ {timeLeft}초
+        </div>
+
+        {/* 차이점 진행 */}
+        <div className="flex-1 flex items-center gap-1 justify-center">
+          <span className="text-xs text-gray-400">R{round+1}</span>
+          <span className="text-xs text-gray-400">{THEME_NAMES[level.theme]}</span>
           {level.diffs.map((d,i) => (
-            <div key={i} className={`w-5 h-5 rounded-full border-2 transition-all ${
+            <div key={i} className={`w-4 h-4 rounded-full border-2 transition-all ${
               found.has(d.elemId) ? 'bg-green-400 border-green-500 scale-110' : 'bg-white border-gray-300'
             }`}/>
           ))}
         </div>
+
+        {/* 콤보 */}
+        {combo >= 2 && (
+          <span className="text-xs font-bold text-amber-500 animate-bounce">
+            🔥×{combo}
+          </span>
+        )}
+
+        {/* 힌트 버튼 */}
+        <button
+          onClick={useHint}
+          disabled={remainingHints === 0 || cleared || timeUp}
+          className="px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-600 hover:bg-amber-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          💡 힌트 (-5)
+        </button>
       </div>
 
-      <main className="flex-1 flex flex-col gap-2 items-center justify-center">
+      <main className="flex-1 flex flex-col gap-1.5 items-center justify-center">
         <div className="w-full max-w-md">
-          <p className="text-xs text-center text-gray-400 mb-1">▼ 원본</p>
-          <SceneSVG level={level} isRight={false} found={found}/>
+          <p className="text-xs text-center text-gray-400 mb-0.5">▼ 원본</p>
+          <SceneSVG level={level} isRight={false} found={found} showHint={showHint}/>
         </div>
-        <div className={`w-full max-w-md transition-all ${wrongFlash ? 'ring-4 ring-red-400 rounded-2xl' : ''}`}>
-          <p className="text-xs text-center text-gray-400 mb-1">▼ 다른 그림을 찾아 터치!</p>
-          <SceneSVG level={level} isRight={true} found={found} onTap={handleTap}/>
+        <div className={`w-full max-w-md transition-all ${wrongFlash ? 'ring-4 ring-red-400 rounded-2xl animate-[shake_0.3s_ease-in-out]' : ''}`}>
+          <p className="text-xs text-center text-gray-400 mb-0.5">▼ 다른 그림을 찾아 터치!</p>
+          <SceneSVG level={level} isRight={true} found={found} onTap={handleTap} showHint={showHint} lastFoundId={lastFoundId}/>
         </div>
       </main>
 
       <AnimatePresence>
-        {cleared && (
+        {(cleared || timeUp) && (
           <motion.div initial={{scale:0}} animate={{scale:1}} exit={{scale:0}}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
             <div className="bg-white rounded-3xl p-8 text-center shadow-2xl mx-4">
-              <div className="text-5xl mb-3">🎉</div>
-              <p className="text-xl font-bold text-green-600 mb-1">모두 찾았어요!</p>
-              <p className="text-gray-500 mb-4">+20 보너스 포함 ⭐{score}</p>
-              <button onClick={next} className="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold text-lg transition-colors">
-                다음 라운드 →
-              </button>
+              <div className="text-5xl mb-3">{cleared ? '🎉' : '⏰'}</div>
+              <p className="text-xl font-bold mb-1" style={{color: cleared ? '#16a34a' : '#dc2626'}}>
+                {cleared ? '모두 찾았어요!' : '시간 초과!'}
+              </p>
+              {cleared && (
+                <div className="text-sm text-gray-500 mb-1 space-y-0.5">
+                  <p>시간 보너스 +{timeLeft * 2}점</p>
+                  {combo >= 2 && <p>최고 콤보 🔥×{combo}</p>}
+                </div>
+              )}
+              <p className="text-gray-500 mb-4">총 ⭐{score}점</p>
+              <div className="flex gap-3 justify-center">
+                {cleared ? (
+                  <button onClick={next} className="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold text-lg transition-colors">
+                    다음 라운드 →
+                  </button>
+                ) : (
+                  <>
+                    <button onClick={restart} className="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl font-bold transition-colors">
+                      처음부터
+                    </button>
+                    <button onClick={next} className="px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-bold transition-colors">
+                      다음 라운드
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
