@@ -158,7 +158,7 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '로봇', emoji: '🤖' },
   { word: '컴퓨터', emoji: '💻' },
   { word: '텔레비전', emoji: '📺' },
-  { word: '냉장고', emoji: '🧊' },
+  { word: '얼음', emoji: '🧊' },
   { word: '침대', emoji: '🛏️' },
   { word: '의자', emoji: '🪑' },
   { word: '양초', emoji: '🕯️' },
