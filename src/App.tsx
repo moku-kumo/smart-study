@@ -1,10 +1,19 @@
-﻿function App() {
+﻿import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Home from '@/routes/Home'
+import MathHome from '@/routes/math/MathHome'
+import EnglishHome from '@/routes/english/EnglishHome'
+import KoreanHome from '@/routes/korean/KoreanHome'
+
+function App() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-orange-100 to-pink-100">
-      <h1 className="text-4xl font-bold text-orange-600">
-        🎓 SmartStudy
-      </h1>
-    </div>
+    <BrowserRouter basename="/SmartStudy">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/math" element={<MathHome />} />
+        <Route path="/english" element={<EnglishHome />} />
+        <Route path="/korean" element={<KoreanHome />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
