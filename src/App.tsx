@@ -19,7 +19,7 @@ import SpotDiff from '@/routes/game/SpotDiff'
 
 function App() {
   return (
-    <BrowserRouter basename="/SmartStudy">
+    <BrowserRouter basename="/smart-study">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/math" element={<MathHome />} />

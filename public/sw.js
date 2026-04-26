@@ -1,9 +1,9 @@
-const CACHE_NAME = 'smartstudy-v2'
+const CACHE_NAME = 'smartstudy-v3'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) =>
-      cache.addAll(['/SmartStudy/'])
+      cache.addAll(['/smart-study/'])
     )
   )
   self.skipWaiting()
@@ -29,7 +29,7 @@ self.addEventListener('fetch', (event) => {
       }
       return response
     }).catch(() =>
-      caches.match(event.request).then((cached) => cached || caches.match('/SmartStudy/'))
+      caches.match(event.request).then((cached) => cached || caches.match('/smart-study/'))
     )
   )
 })

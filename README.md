@@ -4,7 +4,7 @@
 
 ## 📱 배포
 
-**[https://moku-kumo.github.io/SmartStudy/](https://moku-kumo.github.io/SmartStudy/)**
+**[https://moku-kumo.github.io/smart-study/](https://moku-kumo.github.io/smart-study/)**
 
 모바일 홈 화면에 추가하면 앱처럼 사용할 수 있습니다.
 
