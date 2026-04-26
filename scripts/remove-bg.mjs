@@ -1,10 +1,10 @@
 import sharp from 'sharp'
 
-const INPUT = 'public/images/pororo.png'
+const INPUT = 'public/images/pororo_original.png'
 const OUTPUT = 'public/images/pororo.png'
 
-// 배경색 제거: 밝은 회색/흰색 계열 픽셀을 투명으로
-const THRESHOLD = 200 // R,G,B 모두 이 값 이상이면 배경으로 판정
+// 배경색 제거: 아주 밝은 픽셀만 배경으로 판정 (살색 보존)
+const THRESHOLD = 235 // R,G,B 모두 이 값 이상이면 배경으로 판정
 
 const img = sharp(INPUT)
 const { data, info } = await img.ensureAlpha().raw().toBuffer({ resolveWithObject: true })
@@ -57,8 +57,8 @@ for (let y = 0; y < height; y++) {
       if (nx < 0 || nx >= width || ny < 0 || ny >= height) { bgNeighbors++; continue }
       if (visited[ny * width + nx]) bgNeighbors++
     }
-    if (bgNeighbors > 0 && data[idx] >= THRESHOLD - 30 && data[idx+1] >= THRESHOLD - 30 && data[idx+2] >= THRESHOLD - 30) {
-      data[idx + 3] = Math.max(0, data[idx + 3] - bgNeighbors * 60)
+    if (bgNeighbors > 0 && data[idx] >= THRESHOLD - 10 && data[idx+1] >= THRESHOLD - 10 && data[idx+2] >= THRESHOLD - 10) {
+      data[idx + 3] = Math.max(0, data[idx + 3] - bgNeighbors * 40)
     }
   }
 }
