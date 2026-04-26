@@ -10,7 +10,7 @@ const GAME_TIME = 30
 const PLAYER_SIZE = 80 // px
 const POOP_SIZE = 64 // px
 const PLAYER_SPEED = 6 // px per frame
-const HIT_SHRINK = 0.6 // 충돌 판정을 실제 크기의 60%로
+const HIT_SHRINK = 0.8 // 충돌 판정을 실제 크기의 80%로
 
 interface Poop {
   id: number
