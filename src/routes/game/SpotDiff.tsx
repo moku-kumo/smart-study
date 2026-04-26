@@ -175,15 +175,17 @@ function renderElem(e: SceneElem, oc?: string, os?: number, hidden?: boolean) {
         <rect x={e.x-s*0.7} y={e.y-s*0.55} width={s*0.35} height={s*0.3} rx={2} fill="#87CEEB" stroke="#FFF" strokeWidth={1.5}/>
         <rect x={e.x+s*0.35} y={e.y-s*0.55} width={s*0.35} height={s*0.3} rx={2} fill="#87CEEB" stroke="#FFF" strokeWidth={1.5}/>
       </g>
-    case 'building':
+    case 'building': {
+      const winColors = ['#FFD700','#87CEEB','#333']
       return <g key={k}>
         <rect x={e.x-s*0.7} y={e.y-s*2} width={s*1.4} height={s*2.5} rx={2} fill={c}/>
         {Array.from({length:4}).map((_,row) =>
           Array.from({length:2}).map((_,col) =>
-            <rect key={`${row}-${col}`} x={e.x-s*0.45+col*s*0.6} y={e.y-s*1.8+row*s*0.5} width={s*0.3} height={s*0.25} rx={1} fill={pick(['#FFD700','#87CEEB','#333'])} opacity={0.8}/>
+            <rect key={`${row}-${col}`} x={e.x-s*0.45+col*s*0.6} y={e.y-s*1.8+row*s*0.5} width={s*0.3} height={s*0.25} rx={1} fill={winColors[(row*2+col) % winColors.length]} opacity={0.8}/>
           )
         )}
       </g>
+    }
     case 'barn':
       return <g key={k}>
         <rect x={e.x-s} y={e.y-s*0.6} width={s*2} height={s*1.2} fill={c}/>
