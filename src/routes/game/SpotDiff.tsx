@@ -631,15 +631,16 @@ function SceneSVG({ level, isRight, found, onTap }: {
   const isUnderwater = theme === 'underwater'
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-2xl shadow-md border-2 border-white" style={{ maxHeight: '38vh' }}
-      onClick={ev => {
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full rounded-2xl shadow-md border-2 border-white touch-none" style={{ maxHeight: '38vh' }}
+      onPointerDown={ev => {
         if (!isRight || !onTap) return
+        ev.preventDefault()
         const svg = ev.currentTarget; const rect = svg.getBoundingClientRect()
         const cx = (ev.clientX - rect.left) * W / rect.width
         const cy = (ev.clientY - rect.top) * H / rect.height
         for (const d of diffs) {
           if (found.has(d.elemId)) continue
-          if (Math.sqrt((cx-d.cx)**2 + (cy-d.cy)**2) < d.r * 1.3) { onTap(d.elemId); return }
+          if (Math.sqrt((cx-d.cx)**2 + (cy-d.cy)**2) < d.r * 2) { onTap(d.elemId); return }
         }
         onTap('__miss__')
       }}
