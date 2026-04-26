@@ -188,5 +188,5 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '농구', emoji: '🏀' },
   { word: '수영', emoji: '🏊' },
   { word: '스키', emoji: '⛷️' },
-  { word: '다리미', emoji: '♟️' },
+  { word: '탁구', emoji: '🏓' },
 ]
