@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smartstudy-v1'
+const CACHE_NAME = 'smartstudy-v2'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -20,15 +20,16 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
+  // Network-first: 네트워크 우선, 실패 시 캐시 폴백
   event.respondWith(
-    caches.match(event.request).then((cached) =>
-      cached || fetch(event.request).then((response) => {
-        if (response.ok) {
-          const clone = response.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
-        }
-        return response
-      }).catch(() => caches.match('/SmartStudy/'))
+    fetch(event.request).then((response) => {
+      if (response.ok) {
+        const clone = response.clone()
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+      }
+      return response
+    }).catch(() =>
+      caches.match(event.request).then((cached) => cached || caches.match('/SmartStudy/'))
     )
   )
 })

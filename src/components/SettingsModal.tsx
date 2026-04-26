@@ -173,6 +173,18 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
                 onChange={(v) => store.setStepPatternSettings({ difficulty: v })}
               />
               <div className="mt-2">
+                <span className="text-sm text-gray-500">빈칸 수: {store.stepPatternSettings.blankCount}개</span>
+                <SegmentButton<string>
+                  options={[
+                    { value: '1', label: '1개' },
+                    { value: '2', label: '2개' },
+                    { value: '3', label: '3개' },
+                  ]}
+                  value={String(store.stepPatternSettings.blankCount)}
+                  onChange={(v) => store.setStepPatternSettings({ blankCount: Number(v) })}
+                />
+              </div>
+              <div className="mt-2">
                 <span className="text-sm text-gray-500">최대 숫자: {store.stepPatternSettings.maxNum}</span>
                 <input
                   type="range"

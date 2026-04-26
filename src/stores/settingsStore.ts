@@ -18,6 +18,7 @@ export interface PatternSettings {
 export interface StepPatternSettings {
   difficulty: 'easy' | 'hard' // easy=5단위, hard=랜덤 간격
   maxNum: number
+  blankCount: number // 1~3
 }
 
 // --- 영어 난이도 ---
@@ -64,7 +65,7 @@ interface SettingsState {
 }
 
 const defaultPatternSettings: PatternSettings = { minNum: 1, maxNum: 50, blankCount: 1 }
-const defaultStepPatternSettings: StepPatternSettings = { difficulty: 'easy', maxNum: 50 }
+const defaultStepPatternSettings: StepPatternSettings = { difficulty: 'easy', maxNum: 50, blankCount: 1 }
 const defaultEnglishSettings: EnglishSettings = { alphabetMode: 'mixed', wordCount: 4, ttsSpeed: 0.85 }
 const defaultKoreanSettings: KoreanSettings = { jamoFilter: 'all', wordLength: 'all' }
 

@@ -55,21 +55,21 @@ function generateProblem(settings: StepPatternSettings, blankCount: number) {
 }
 
 export default function Pattern() {
-  const { stepPatternSettings, patternSettings, timerEnabled, timerSeconds, soundEnabled } = useSettingsStore()
+  const { stepPatternSettings, timerEnabled, timerSeconds, soundEnabled } = useSettingsStore()
   const { score, total, addCorrect, addWrong } = useScore()
   const [problem, setProblem] = useState(() =>
-    generateProblem(stepPatternSettings, patternSettings.blankCount)
+    generateProblem(stepPatternSettings, stepPatternSettings.blankCount)
   )
   const [filled, setFilled] = useState<number[]>([])
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)
 
   const next = useCallback(() => {
-    setProblem(generateProblem(stepPatternSettings, patternSettings.blankCount))
+    setProblem(generateProblem(stepPatternSettings, stepPatternSettings.blankCount))
     setFilled([])
     setFeedback(null)
     setTimerKey((k) => k + 1)
-  }, [stepPatternSettings, patternSettings.blankCount])
+  }, [stepPatternSettings])
 
   const handleSelect = (opt: number) => {
     if (feedback) return

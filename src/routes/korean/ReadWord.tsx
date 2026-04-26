@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import GameLayout from '@/components/game/GameLayout'
 import OptionGrid from '@/components/game/OptionGrid'
 import Feedback from '@/components/game/Feedback'
@@ -14,10 +14,17 @@ function filterByLength(words: KoreanWordEntry[], wordLength: string): KoreanWor
   return words
 }
 
-function generateProblem(wordLength: string) {
+function generateProblem(wordLength: string, lastWord?: string) {
   const pool = filterByLength(koreanWords, wordLength)
   const src = pool.length >= 4 ? pool : koreanWords
-  const [correct, ...distractors] = pickRandom(src, 4) as [KoreanWordEntry, ...KoreanWordEntry[]]
+  let correct: KoreanWordEntry
+  let distractors: KoreanWordEntry[]
+  // 연속 같은 단어 방지
+  let attempts = 0
+  do {
+    ;[correct, ...distractors] = pickRandom(src, 4) as [KoreanWordEntry, ...KoreanWordEntry[]]
+    attempts++
+  } while (correct.word === lastWord && src.length > 1 && attempts < 10)
   const options = shuffle([correct, ...distractors])
   return { correct, options }
 }
@@ -25,12 +32,15 @@ function generateProblem(wordLength: string) {
 export default function ReadWord() {
   const { timerEnabled, timerSeconds, soundEnabled, koreanSettings } = useSettingsStore()
   const { score, total, addCorrect, addWrong } = useScore()
+  const lastWordRef = useRef<string | undefined>(undefined)
   const [problem, setProblem] = useState(() => generateProblem(koreanSettings.wordLength))
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null)
   const [timerKey, setTimerKey] = useState(0)
 
   const next = useCallback(() => {
-    setProblem(generateProblem(koreanSettings.wordLength))
+    const p = generateProblem(koreanSettings.wordLength, lastWordRef.current)
+    lastWordRef.current = p.correct.word
+    setProblem(p)
     setFeedback(null)
     setTimerKey((k) => k + 1)
   }, [koreanSettings.wordLength])
