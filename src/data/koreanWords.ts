@@ -195,7 +195,7 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '꿀', emoji: '🍯' },
   { word: '공', emoji: '⚽' },
   { word: '불', emoji: '🔥' },
-  { word: '돈', emoji: '💰' },
+  { word: '돈', emoji: '�' },
   { word: '문', emoji: '🚪' },
   { word: '칼', emoji: '🔪' },
   { word: '컵', emoji: '🥤' },
@@ -272,5 +272,5 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '바람', emoji: '🌬️' },
   { word: '회오리', emoji: '🌪️' },
   { word: '눈보라', emoji: '🌨️' },
-  { word: '하트', emoji: '❤️' },
+  { word: '사랑', emoji: '❤️' },
 ]
