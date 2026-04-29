@@ -7,10 +7,15 @@ import { useGameTimer } from '@/hooks/useGameTimer'
 import { playCorrect } from '@/lib/audio'
 
 const GAME_TIME = 30
-const PLAYER_SIZE = 80 // px
-const POOP_SIZE = 64 // px
-const PLAYER_SPEED = 6 // px per frame
+const BASE_PLAYER_SIZE = 80 // px (desktop)
+const BASE_POOP_SIZE = 64 // px (desktop)
+const BASE_PLAYER_SPEED = 6 // px per frame
 const HIT_SHRINK = 0.8 // 충돌 판정을 실제 크기의 80%로
+
+// 화면 너비에 따라 크기 스케일 (360px 기준 → 0.65배, 768px 이상 → 1배)
+function getScale(width: number) {
+  return Math.max(0.55, Math.min(1, width / 768))
+}
 
 interface Poop {
   id: number
@@ -54,27 +59,40 @@ export default function DodgePoop() {
     return { w: el?.clientWidth ?? 300, h: el?.clientHeight ?? 500 }
   }
 
-  // 시간에 따라 스폰 간격, 속도, 동시 개수 증가
+  const getSizes = () => {
+    const { w } = getArea()
+    const s = getScale(w)
+    return {
+      playerSize: Math.round(BASE_PLAYER_SIZE * s),
+      poopSize: Math.round(BASE_POOP_SIZE * s),
+      playerSpeed: BASE_PLAYER_SPEED * s,
+    }
+  }
+
+  // 시간에 따라 스폰 간격, 속도, 동시 개수 증가 (좁은 화면은 burst 제한)
   const getDifficulty = () => {
+    const { w } = getArea()
+    const narrow = w < 400
     const t = elapsedRef.current
     if (t < 5) return { interval: 500, speed: 2.5, burst: 1 }
     if (t < 10) return { interval: 380, speed: 3, burst: 1 }
-    if (t < 15) return { interval: 300, speed: 3.5, burst: 2 }
-    if (t < 20) return { interval: 250, speed: 4, burst: 2 }
-    if (t < 25) return { interval: 200, speed: 4.5, burst: 3 }
-    return { interval: 150, speed: 5, burst: 3 }
+    if (t < 15) return { interval: 300, speed: 3.5, burst: narrow ? 1 : 2 }
+    if (t < 20) return { interval: 250, speed: 4, burst: narrow ? 1 : 2 }
+    if (t < 25) return { interval: 200, speed: 4.5, burst: narrow ? 2 : 3 }
+    return { interval: 150, speed: 5, burst: narrow ? 2 : 3 }
   }
 
   const spawnPoop = useCallback(() => {
     if (!runningRef.current) return
     const { w } = getArea()
-    const margin = POOP_SIZE
+    const { poopSize } = getSizes()
+    const margin = poopSize
     const { speed, burst } = getDifficulty()
     for (let i = 0; i < burst; i++) {
       const p: Poop = {
         id: nextId.current++,
         x: margin + Math.random() * (w - margin * 2),
-        y: -POOP_SIZE - i * 20,
+        y: -poopSize - i * 20,
         speed: speed + Math.random() * 1.5,
       }
       poopsRef.current = [...poopsRef.current, p]
@@ -84,41 +102,42 @@ export default function DodgePoop() {
   const gameLoop = useCallback(() => {
     if (!runningRef.current) return
     const { w, h } = getArea()
+    const { playerSize, poopSize, playerSpeed } = getSizes()
 
-    // Move player
+    // Move player (playerX = center point due to translateX(-50%))
     if (moveDir.current !== 0) {
       playerXRef.current = Math.max(
-        0,
-        Math.min(w - PLAYER_SIZE, playerXRef.current + moveDir.current * PLAYER_SPEED),
+        playerSize / 2,
+        Math.min(w - playerSize / 2, playerXRef.current + moveDir.current * playerSpeed),
       )
       setPlayerX(playerXRef.current)
     }
 
-    const px = playerXRef.current
-    const py = h - PLAYER_SIZE - 8
+    const px = playerXRef.current // center x
+    const py = h - playerSize - 8
     // Shrunk hitbox for forgiving collision
-    const hs = (PLAYER_SIZE * (1 - HIT_SHRINK)) / 2
-    const pLeft = px + hs
-    const pRight = px + PLAYER_SIZE - hs
+    const hs = (playerSize * (1 - HIT_SHRINK)) / 2
+    const pLeft = px - playerSize / 2 + hs
+    const pRight = px + playerSize / 2 - hs
     const pTop = py + hs
-    const pBottom = py + PLAYER_SIZE - hs
+    const pBottom = py + playerSize - hs
 
     let hitDetected = false
     const alive: Poop[] = []
 
     for (const p of poopsRef.current) {
       const newY = p.y + p.speed
-      if (newY > h + POOP_SIZE) {
+      if (newY > h + poopSize) {
         scoreRef.current += 1
         setScore(scoreRef.current)
         continue
       }
       // AABB collision
-      const poopHs = (POOP_SIZE * (1 - HIT_SHRINK)) / 2
-      const oLeft = p.x - POOP_SIZE / 2 + poopHs
-      const oRight = p.x + POOP_SIZE / 2 - poopHs
-      const oTop = newY - POOP_SIZE / 2 + poopHs
-      const oBottom = newY + POOP_SIZE / 2 - poopHs
+      const poopHs = (poopSize * (1 - HIT_SHRINK)) / 2
+      const oLeft = p.x - poopSize / 2 + poopHs
+      const oRight = p.x + poopSize / 2 - poopHs
+      const oTop = newY - poopSize / 2 + poopHs
+      const oBottom = newY + poopSize / 2 - poopHs
 
       if (pLeft < oRight && pRight > oLeft && pTop < oBottom && pBottom > oTop) {
         hitDetected = true
@@ -145,7 +164,7 @@ export default function DodgePoop() {
 
   const start = () => {
     const { w } = getArea()
-    const startX = (w - PLAYER_SIZE) / 2
+    const startX = w / 2
     playerXRef.current = startX
     setPlayerX(startX)
     setStarted(true)
@@ -210,8 +229,9 @@ export default function DodgePoop() {
   const handlePointerMove = (e: React.PointerEvent) => {
     if (!dragging.current || !runningRef.current) return
     const { w } = getArea()
+    const { playerSize } = getSizes()
     const dx = e.clientX - touchStartX.current
-    const newX = Math.max(0, Math.min(w - PLAYER_SIZE, playerStartX.current + dx))
+    const newX = Math.max(playerSize / 2, Math.min(w - playerSize / 2, playerStartX.current + dx))
     playerXRef.current = newX
     setPlayerX(newX)
   }
@@ -294,41 +314,49 @@ export default function DodgePoop() {
             className="flex-1 relative mt-2 touch-none select-none overflow-hidden rounded-2xl bg-gradient-to-b from-green-100 to-green-200 border-2 border-green-300"
           >
             {/* Poops */}
-            {renderPoops.map((p) => (
-              <div
-                key={p.id}
-                className="absolute pointer-events-none"
-                style={{
-                  left: p.x,
-                  top: p.y,
-                  width: POOP_SIZE,
-                  height: POOP_SIZE,
-                  transform: 'translate(-50%, -50%)',
-                  fontSize: POOP_SIZE - 4,
-                  lineHeight: 1,
-                  textAlign: 'center',
-                  willChange: 'top',
-                }}
-              >
-                💩
-              </div>
-            ))}
+            {renderPoops.map((p) => {
+              const ps = getSizes().poopSize
+              return (
+                <div
+                  key={p.id}
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: p.x,
+                    top: p.y,
+                    width: ps,
+                    height: ps,
+                    transform: 'translate(-50%, -50%)',
+                    fontSize: ps - 4,
+                    lineHeight: 1,
+                    textAlign: 'center',
+                    willChange: 'top',
+                  }}
+                >
+                  💩
+                </div>
+              )
+            })}
 
             {/* Player - 뽀로로 */}
-            <img
-              src={import.meta.env.BASE_URL + 'images/pororo.png'}
-              alt="뽀로로"
-              className="absolute pointer-events-none"
-              draggable={false}
-              style={{
-                left: playerX,
-                bottom: 8,
-                width: PLAYER_SIZE,
-                height: PLAYER_SIZE,
-                objectFit: 'contain',
-                transform: 'translateX(-50%)',
-              }}
-            />
+            {(() => {
+              const ps = getSizes().playerSize
+              return (
+                <img
+                  src={import.meta.env.BASE_URL + 'images/pororo.png'}
+                  alt="뽀로로"
+                  className="absolute pointer-events-none"
+                  draggable={false}
+                  style={{
+                    left: playerX,
+                    bottom: 8,
+                    width: ps,
+                    height: ps,
+                    objectFit: 'contain',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+              )
+            })()}
           </div>
         </>
       )}

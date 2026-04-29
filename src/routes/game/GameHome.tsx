@@ -25,6 +25,7 @@ export default function GameHome() {
   const remainingGame = useStudyTimeStore(getRemainingGameSeconds)
   const timeLimitOff = useStudyTimeStore(isTimeLimitOff)
   const setTimeLimitOff = useStudyTimeStore(s => s.setTimeLimitOff)
+  const clearTimeLimitOff = useStudyTimeStore(s => s.clearTimeLimitOff)
   const required = REQUIRED_STUDY_SECONDS
 
   const mins = Math.floor(todaySeconds / 60)
@@ -87,36 +88,44 @@ export default function GameHome() {
       </div>
 
       {/* 남은 게임 시간 / 시간제한 해제 */}
-      {unlocked && (
-        <div className="max-w-xs mx-auto mb-8 text-center">
-          {timeLimitOff ? (
+      <div className="max-w-xs mx-auto mb-8 text-center">
+        {timeLimitOff ? (
+          <div className="flex flex-col items-center gap-2">
             <div className="inline-flex items-center gap-2 bg-green-50 rounded-2xl px-4 py-2 shadow-sm border border-green-200">
               <Unlock size={18} className="text-green-500" />
               <span className="font-bold text-green-600">시간제한 해제됨! 🎉</span>
             </div>
-          ) : (
-            <>
-              <div className="inline-flex items-center gap-2 bg-white rounded-2xl px-4 py-2 shadow-sm">
-                <Clock size={18} className={playable ? 'text-green-500' : 'text-red-400'} />
-                <span className={`font-bold ${playable ? 'text-green-600' : 'text-red-500'}`}>
-                  남은 게임 시간: {remMins}분 {remSecs}초
-                </span>
-              </div>
-              {playable ? (
-                <p className="text-xs text-gray-400 mt-1">공부한 만큼 게임할 수 있어요!</p>
-              ) : (
-                <p className="text-xs text-red-400 mt-1">게임 시간을 다 썼어요! 더 공부하면 시간이 늘어나요 📚</p>
-              )}
-              <button
-                onClick={openMathModal}
-                className="mt-3 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold text-sm transition-colors shadow-md"
-              >
-                🧮 곱하기 문제 풀고 시간제한 해제
-              </button>
-            </>
-          )}
-        </div>
-      )}
+            <button
+              onClick={clearTimeLimitOff}
+              className="px-4 py-2 bg-gray-400 hover:bg-gray-500 text-white rounded-xl font-bold text-sm transition-colors shadow-md"
+            >
+              🔒 다시 잠그기
+            </button>
+          </div>
+        ) : unlocked ? (
+          <>
+            <div className="inline-flex items-center gap-2 bg-white rounded-2xl px-4 py-2 shadow-sm">
+              <Clock size={18} className={playable ? 'text-green-500' : 'text-red-400'} />
+              <span className={`font-bold ${playable ? 'text-green-600' : 'text-red-500'}`}>
+                남은 게임 시간: {remMins}분 {remSecs}초
+              </span>
+            </div>
+            {playable ? (
+              <p className="text-xs text-gray-400 mt-1">공부한 만큼 게임할 수 있어요!</p>
+            ) : (
+              <p className="text-xs text-red-400 mt-1">게임 시간을 다 썼어요! 더 공부하면 시간이 늘어나요 📚</p>
+            )}
+          </>
+        ) : null}
+        {!timeLimitOff && (
+          <button
+            onClick={openMathModal}
+            className="mt-3 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-xl font-bold text-sm transition-colors shadow-md"
+          >
+            🧮 곱하기 문제 풀고 시간제한 해제
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-lg mx-auto">
         {games.map((g, i) =>

@@ -16,6 +16,7 @@ interface StudyTimeState {
   addSeconds: (seconds: number) => void
   addGameSeconds: (seconds: number) => void
   setTimeLimitOff: () => void
+  clearTimeLimitOff: () => void
 }
 
 export const useStudyTimeStore = create<StudyTimeState>((set, get) => ({
@@ -39,6 +40,12 @@ export const useStudyTimeStore = create<StudyTimeState>((set, get) => ({
   setTimeLimitOff: () => {
     const tl = { ...get().timeLimitOff }
     tl[todayKey()] = true
+    save('timeLimitOff', tl)
+    set({ timeLimitOff: tl })
+  },
+  clearTimeLimitOff: () => {
+    const tl = { ...get().timeLimitOff }
+    delete tl[todayKey()]
     save('timeLimitOff', tl)
     set({ timeLimitOff: tl })
   },
@@ -71,9 +78,9 @@ export function isTimeLimitOff(state: StudyTimeState): boolean {
   return state.timeLimitOff[todayKey()] === true
 }
 
-/** 게임 플레이 가능 여부 (잠금 해제 + (남은 시간 > 0 또는 시간제한 해제)) */
+/** 게임 플레이 가능 여부 (시간제한 해제 또는 (잠금 해제 + 남은 시간 > 0)) */
 export function canPlayGame(state: StudyTimeState): boolean {
-  if (!isGameUnlocked(state)) return false
   if (isTimeLimitOff(state)) return true
+  if (!isGameUnlocked(state)) return false
   return getRemainingGameSeconds(state) > 0
 }
