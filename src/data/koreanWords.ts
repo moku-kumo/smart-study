@@ -235,7 +235,7 @@ export const koreanWords: KoreanWordEntry[] = [
   // ── 바다생물 ──
   { word: '새우', emoji: '🦐' },
   { word: '게', emoji: '🦀' },
-  { word: '조개', emoji: '🐚' },
+  { word: '조개', emoji: '🦪' },
   { word: '가재', emoji: '🦞' },
   { word: '복어', emoji: '🐡' },
   { word: '물고기', emoji: '🐟' },
