@@ -82,7 +82,7 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '밥', emoji: '🍚' },
   { word: '빵', emoji: '🍞' },
   { word: '우유', emoji: '🥛' },
-  { word: '두부', emoji: '🧈' },
+  { word: '버터', emoji: '🧈' },
   { word: '피자', emoji: '🍕' },
   { word: '햄버거', emoji: '🍔' },
   { word: '라면', emoji: '🍜' },
@@ -141,7 +141,7 @@ export const koreanWords: KoreanWordEntry[] = [
   // ── 물건/생활 ──
   { word: '모자', emoji: '🧢' },
   { word: '바지', emoji: '👖' },
-  { word: '치마', emoji: '👗' },
+  { word: '드레스', emoji: '👗' },
   { word: '구두', emoji: '👞' },
   { word: '가방', emoji: '🎒' },
   { word: '시계', emoji: '⌚' },
@@ -184,9 +184,9 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '지구', emoji: '🌍' },
 
   // ── 스포츠/놀이 ──
-  { word: '축구', emoji: '⚽' },
-  { word: '야구', emoji: '⚾' },
-  { word: '농구', emoji: '🏀' },
+  { word: '축구공', emoji: '⚽' },
+  { word: '야구공', emoji: '⚾' },
+  { word: '농구공', emoji: '🏀' },
   { word: '수영', emoji: '🏊' },
   { word: '스키', emoji: '⛷️' },
   { word: '탁구', emoji: '🏓' },
