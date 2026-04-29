@@ -52,5 +52,4 @@ export const MODE_NAMES: Record<string, string> = {
   'english/phonics': '파닉스',
   'korean/jamo': '자음모음',
   'korean/word': '단어읽기',
-  'korean/batchim': '받침단어',
 }

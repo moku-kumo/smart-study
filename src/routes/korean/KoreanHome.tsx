@@ -7,7 +7,6 @@ import { ChevronLeft, Settings } from 'lucide-react'
 const modes = [
   { to: '/korean/jamo', emoji: 'ㄱㅏ', label: '자음/모음' },
   { to: '/korean/word', emoji: '📖', label: '단어읽기' },
-  { to: '/korean/batchim', emoji: '📝', label: '받침 단어' },
 ]
 
 export default function KoreanHome() {

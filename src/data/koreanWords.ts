@@ -78,13 +78,15 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '피망', emoji: '🫑' },
 
   // ── 음식 ──
+  { word: '식사', emoji: '🍽️' },
+  { word: '밥', emoji: '🍚' },
   { word: '빵', emoji: '🍞' },
   { word: '우유', emoji: '🥛' },
   { word: '두부', emoji: '🧈' },
   { word: '피자', emoji: '🍕' },
   { word: '햄버거', emoji: '🍔' },
   { word: '라면', emoji: '🍜' },
-  { word: '김밥', emoji: '🍙' },
+  { word: '주먹밥', emoji: '🍙' },
   { word: '달걀', emoji: '🥚' },
   { word: '아이스크림', emoji: '🍦' },
   { word: '케이크', emoji: '🎂' },
@@ -98,7 +100,6 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '감자튀김', emoji: '🍟' },
   { word: '핫도그', emoji: '🌭' },
   { word: '주먹밥', emoji: '🍙' },
-  { word: '소시지', emoji: '🌭' },
 
   // ── 탈것 ──
   { word: '버스', emoji: '🚌' },
@@ -114,7 +115,7 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '택시', emoji: '🚕' },
   { word: '트럭', emoji: '🚛' },
   { word: '오토바이', emoji: '🏍️' },
-  { word: '스쿠터', emoji: '🛴' },
+  { word: '킥보드', emoji: '🛴' },
 
   // ── 자연 ──
   { word: '나무', emoji: '🌳' },
@@ -179,8 +180,8 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '병원', emoji: '🏥' },
   { word: '집', emoji: '🏠' },
   { word: '성', emoji: '🏰' },
-  { word: '공원', emoji: '🏞️' },
   { word: '도서관', emoji: '📚' },
+  { word: '지구', emoji: '🌍' },
 
   // ── 스포츠/놀이 ──
   { word: '축구', emoji: '⚽' },
@@ -189,4 +190,87 @@ export const koreanWords: KoreanWordEntry[] = [
   { word: '수영', emoji: '🏊' },
   { word: '스키', emoji: '⛷️' },
   { word: '탁구', emoji: '🏓' },
+
+  // ── 받침 있는 짧은 낱말 ──
+  { word: '꿀', emoji: '🍯' },
+  { word: '공', emoji: '⚽' },
+  { word: '불', emoji: '🔥' },
+  { word: '돈', emoji: '💰' },
+  { word: '문', emoji: '🚪' },
+  { word: '칼', emoji: '🔪' },
+  { word: '컵', emoji: '🥤' },
+  { word: '벌', emoji: '🐝' },
+  { word: '밥', emoji: '🍚' },
+  { word: '옷', emoji: '👕' },
+  { word: '풀', emoji: '🌿' },
+  { word: '칫솔', emoji: '🪥' },
+  { word: '손', emoji: '✋' },
+  { word: '발', emoji: '🦶' },
+  { word: '잎', emoji: '🍃' },
+
+  // ── 악기 ──
+  { word: '바이올린', emoji: '🎻' },
+  { word: '트럼펫', emoji: '🎺' },
+  { word: '색소폰', emoji: '🎷' },
+  { word: '아코디언', emoji: '🪗' },
+
+  // ── 스포츠 추가 ──
+  { word: '테니스', emoji: '🎾' },
+  { word: '배드민턴', emoji: '🏸' },
+  { word: '골프', emoji: '⛳' },
+  { word: '볼링', emoji: '🎳' },
+  { word: '양궁', emoji: '🏹' },
+  { word: '펜싱', emoji: '🤺' },
+  { word: '역도', emoji: '🏋️' },
+  { word: '서핑', emoji: '🏄' },
+  { word: '카누', emoji: '🛶' },
+
+  // ── 곤충 추가 ──
+  { word: '사슴벌레', emoji: '🪲' },
+  { word: '메뚜기', emoji: '🦗' },
+  { word: '바퀴벌레', emoji: '🪳' },
+  { word: '모기', emoji: '🦟' },
+  { word: '애벌레', emoji: '🐛' },
+
+  // ── 바다생물 ──
+  { word: '새우', emoji: '🦐' },
+  { word: '게', emoji: '🦀' },
+  { word: '조개', emoji: '🐚' },
+  { word: '가재', emoji: '🦞' },
+  { word: '복어', emoji: '🐡' },
+  { word: '물고기', emoji: '🐟' },
+
+  // ── 생활용품 추가 ──
+  { word: '비누', emoji: '🧼' },
+  { word: '책', emoji: '📖' },
+  { word: '편지', emoji: '💌' },
+  { word: '전구', emoji: '💡' },
+  { word: '망치', emoji: '🔨' },
+  { word: '자석', emoji: '🧲' },
+  { word: '돋보기', emoji: '🔍' },
+  { word: '종', emoji: '🔔' },
+  { word: '실', emoji: '🧵' },
+  { word: '바늘', emoji: '🪡' },
+  { word: '빗자루', emoji: '🧹' },
+  { word: '양동이', emoji: '🪣' },
+  { word: '소화기', emoji: '🧯' },
+
+  // ── 신체 ──
+  { word: '눈', emoji: '👁️' },
+  { word: '코', emoji: '👃' },
+  { word: '입', emoji: '👄' },
+  { word: '귀', emoji: '👂' },
+  { word: '혀', emoji: '👅' },
+  { word: '뇌', emoji: '🧠' },
+  { word: '뼈', emoji: '🦴' },
+  { word: '이빨', emoji: '🦷' },
+
+  { word: '근육', emoji: '💪' },
+
+  // ── 날씨/기타 ──
+  { word: '온도계', emoji: '🌡️' },
+  { word: '바람', emoji: '🌬️' },
+  { word: '회오리', emoji: '🌪️' },
+  { word: '눈보라', emoji: '🌨️' },
+  { word: '하트', emoji: '❤️' },
 ]

@@ -64,7 +64,7 @@ export default function SettingsModal({ open, onOpenChange }: SettingsModalProps
   const isListen = path.includes('/listen')
   const isKorean = path.includes('/korean')
   const isJamo = path.includes('/jamo')
-  const isWord = path.includes('/word') || path.includes('/batchim')
+  const isWord = path.includes('/word')
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => onOpenChange(false)}>
